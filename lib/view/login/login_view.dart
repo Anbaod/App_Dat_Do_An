@@ -3,9 +3,11 @@ import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 import 'package:food_delivery/view/login/rest_password_view.dart';
 import 'package:food_delivery/view/login/sing_up_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../common_widget/round_icon_button.dart';
 import '../../common_widget/round_textfield.dart';
+import '../main_tabview/main_tabview.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -15,13 +17,66 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  TextEditingController txtEmail = TextEditingController();
-  TextEditingController txtPassword = TextEditingController();
+  final TextEditingController txtEmail = TextEditingController();
+  final TextEditingController txtPassword = TextEditingController();
+
+  Future<void> login() async {
+    String email = txtEmail.text.trim();
+    String password = txtPassword.text.trim();
+
+    final prefs = await SharedPreferences.getInstance();
+
+    String savedName = prefs.getString("user_name") ?? "";
+    String savedEmail = prefs.getString("user_email") ?? "";
+    String savedPassword = prefs.getString("user_password") ?? "";
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng nhập đầy đủ email và mật khẩu")),
+      );
+      return;
+    }
+
+    if (savedEmail.isEmpty || savedPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Chưa có tài khoản. Vui lòng đăng ký trước")),
+      );
+      return;
+    }
+
+    if (email == savedEmail && password == savedPassword) {
+      await prefs.setBool("is_login", true);
+
+      // Lưu thông tin người đang đăng nhập
+      await prefs.setString("current_user_name", savedName);
+      await prefs.setString("current_user_email", savedEmail);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Đăng nhập thành công")),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const MainTabView(),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Sai email hoặc mật khẩu")),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    txtEmail.dispose();
+    txtPassword.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    var media = MediaQuery.of(context).size;
-
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
@@ -29,49 +84,54 @@ class _LoginViewState extends State<LoginView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(
-                height: 64,
-              ),
+              const SizedBox(height: 64),
+
               Text(
-                "Login",
+                "Đăng nhập",
                 style: TextStyle(
-                    color: TColor.primaryText,
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800),
+                  color: TColor.primaryText,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
+
               Text(
-                "Add your details to login",
+                "Nhập thông tin để đăng nhập",
                 style: TextStyle(
-                    color: TColor.secondaryText,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500),
+                  color: TColor.secondaryText,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              const SizedBox(
-                height: 25,
-              ),
+
+              const SizedBox(height: 25),
+
               RoundTextfield(
-                hintText: "Your Email",
+                hintText: "Email của bạn",
                 controller: txtEmail,
                 keyboardType: TextInputType.emailAddress,
               ),
-              const SizedBox(
-                height: 25,
-              ),
+
+              const SizedBox(height: 25),
+
               RoundTextfield(
-                hintText: "Password",
+                hintText: "Mật khẩu",
                 controller: txtPassword,
                 obscureText: true,
               ),
-              const SizedBox(
-                height: 25,
+
+              const SizedBox(height: 25),
+
+              RoundButton(
+                title: "Đăng nhập",
+                onPressed: login,
               ),
-              RoundButton(title: "Login", onPressed: () {}),
-              const SizedBox(
-                height: 4,
-              ),
+
+              const SizedBox(height: 4),
+
               TextButton(
                 onPressed: () {
-                   Navigator.push(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const ResetPasswordView(),
@@ -79,44 +139,46 @@ class _LoginViewState extends State<LoginView> {
                   );
                 },
                 child: Text(
-                  "Forgot your password?",
+                  "Quên mật khẩu?",
                   style: TextStyle(
-                      color: TColor.secondaryText,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500),
-                ),
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              Text(
-                "or Login With",
-                style: TextStyle(
                     color: TColor.secondaryText,
                     fontSize: 14,
-                    fontWeight: FontWeight.w500),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-              const SizedBox(
-                height: 30,
+
+              const SizedBox(height: 30),
+
+              Text(
+                "Hoặc đăng nhập bằng",
+                style: TextStyle(
+                  color: TColor.secondaryText,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
+
+              const SizedBox(height: 30),
+
               RoundIconButton(
                 icon: "assets/img/facebook_logo.png",
-                title: "Login with Facebook",
+                title: "Đăng nhập bằng Facebook",
                 color: const Color(0xff367FC0),
                 onPressed: () {},
               ),
-              const SizedBox(
-                height: 25,
-              ),
+
+              const SizedBox(height: 25),
+
               RoundIconButton(
                 icon: "assets/img/google_logo.png",
-                title: "Login with Google",
+                title: "Đăng nhập bằng Google",
                 color: const Color(0xffDD4B39),
                 onPressed: () {},
               ),
-              const SizedBox(
-                height: 80,
-              ),
+
+              const SizedBox(height: 80),
+
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -130,18 +192,20 @@ class _LoginViewState extends State<LoginView> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      "Don't have an Account? ",
+                      "Chưa có tài khoản? ",
                       style: TextStyle(
-                          color: TColor.secondaryText,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500),
+                        color: TColor.secondaryText,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     Text(
-                      "Sign Up",
+                      "Đăng ký",
                       style: TextStyle(
-                          color: TColor.primary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700),
+                        color: TColor.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
