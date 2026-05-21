@@ -24,7 +24,8 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "rate": "4.9",
       "rating": "124",
       "type": "Minute by tuk tuk",
-      "food_type": "Desserts"
+      "food_type": "Desserts",
+      "price": 12.0
     },
     {
       "image": "assets/img/dess_2.png",
@@ -32,7 +33,8 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "rate": "4.9",
       "rating": "124",
       "type": "Cakes by Tella",
-      "food_type": "Desserts"
+      "food_type": "Desserts",
+      "price": 18.0
     },
     {
       "image": "assets/img/dess_3.png",
@@ -40,7 +42,8 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "rate": "4.9",
       "rating": "124",
       "type": "Café Racer",
-      "food_type": "Desserts"
+      "food_type": "Desserts",
+      "price": 8.0
     },
     {
       "image": "assets/img/dess_4.png",
@@ -48,7 +51,8 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "rate": "4.9",
       "rating": "124",
       "type": "Minute by tuk tuk",
-      "food_type": "Desserts"
+      "food_type": "Desserts",
+      "price": 14.0
     },
     {
       "image": "assets/img/dess_1.png",
@@ -56,7 +60,8 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "rate": "4.9",
       "rating": "124",
       "type": "Minute by tuk tuk",
-      "food_type": "Desserts"
+      "food_type": "Desserts",
+      "price": 12.0
     },
     {
       "image": "assets/img/dess_2.png",
@@ -64,7 +69,8 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "rate": "4.9",
       "rating": "124",
       "type": "Cakes by Tella",
-      "food_type": "Desserts"
+      "food_type": "Desserts",
+      "price": 18.0
     },
     {
       "image": "assets/img/dess_3.png",
@@ -72,7 +78,8 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "rate": "4.9",
       "rating": "124",
       "type": "Café Racer",
-      "food_type": "Desserts"
+      "food_type": "Desserts",
+      "price": 8.0
     },
     {
       "image": "assets/img/dess_4.png",
@@ -80,7 +87,8 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "rate": "4.9",
       "rating": "124",
       "type": "Minute by tuk tuk",
-      "food_type": "Desserts"
+      "food_type": "Desserts",
+      "price": 14.0
     },
   ];
 
@@ -169,7 +177,7 @@ class _MenuItemsViewState extends State<MenuItemsView> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const ItemDetailsView()),
+                            builder: (context) => ItemDetailsView(itemObj: mObj)),
                       );
                     },
                   );

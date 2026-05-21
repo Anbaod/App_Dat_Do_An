@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
+import 'package:provider/provider.dart';
+import 'package:food_delivery/common/cart_provider.dart';
 
 import 'change_address_view.dart';
 import 'checkout_message_view.dart';
@@ -46,6 +48,8 @@ class _CheckoutViewState extends State<CheckoutView> {
       );
       return;
     }
+
+    context.read<CartProvider>().clearCart();
 
     showModalBottomSheet(
       context: context,
@@ -260,23 +264,27 @@ class _CheckoutViewState extends State<CheckoutView> {
                   children: [
                     const SizedBox(height: 15),
 
-                    _buildPriceRow("Tạm tính", "\$68"),
-                    const SizedBox(height: 8),
-
-                    _buildPriceRow("Phí giao hàng", "\$2"),
-                    const SizedBox(height: 8),
-
-                    _buildPriceRow("Giảm giá", "-\$4"),
-                    const SizedBox(height: 15),
-
-                    Divider(
-                      color: TColor.secondaryText.withOpacity(0.5),
-                      height: 1,
+                    Builder(
+                      builder: (context) {
+                        final cart = context.watch<CartProvider>();
+                        return Column(
+                          children: [
+                            _buildPriceRow("Tạm tính", "\$${cart.subTotal.toStringAsFixed(2)}"),
+                            const SizedBox(height: 8),
+                            _buildPriceRow("Phí giao hàng", "\$${cart.deliveryCost.toStringAsFixed(2)}"),
+                            const SizedBox(height: 8),
+                            _buildPriceRow("Giảm giá", "-\$${cart.discount.toStringAsFixed(2)}"),
+                            const SizedBox(height: 15),
+                            Divider(
+                              color: TColor.secondaryText.withOpacity(0.5),
+                              height: 1,
+                            ),
+                            const SizedBox(height: 15),
+                            _buildPriceRow("Tổng cộng", "\$${cart.total.toStringAsFixed(2)}", isTotal: true),
+                          ],
+                        );
+                      },
                     ),
-
-                    const SizedBox(height: 15),
-
-                    _buildPriceRow("Tổng cộng", "\$66", isTotal: true),
                   ],
                 ),
               ),

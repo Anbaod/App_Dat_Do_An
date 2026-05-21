@@ -1,21 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:food_delivery/common_widget/round_icon_button.dart';
+import 'package:provider/provider.dart';
+import 'package:food_delivery/common/cart_provider.dart';
+import 'package:food_delivery/model/cart_item.dart';
 
 import '../../common/color_extension.dart';
 import '../more/my_order_view.dart';
 
 class ItemDetailsView extends StatefulWidget {
-  const ItemDetailsView({super.key});
+  final Map itemObj;
+  const ItemDetailsView({super.key, required this.itemObj});
 
   @override
   State<ItemDetailsView> createState() => _ItemDetailsViewState();
 }
 
 class _ItemDetailsViewState extends State<ItemDetailsView> {
-  double price = 15;
+  late double price;
   int qty = 1;
   bool isFav = false;
+  String? selectedSize;
+  String? selectedIngredients;
+
+  @override
+  void initState() {
+    super.initState();
+    price = (widget.itemObj["price"] as num?)?.toDouble() ?? 15.0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +38,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
         alignment: Alignment.topCenter,
         children: [
           Image.asset(
-            "assets/img/detail_top.png",
+            widget.itemObj["image"]?.toString() ?? "assets/img/detail_top.png",
             width: media.width,
             height: media.width,
             fit: BoxFit.cover,
@@ -68,7 +80,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 25),
                                 child: Text(
-                                  "Tandoori Chicken Pizza",
+                                  widget.itemObj["name"]?.toString() ?? "Unknown",
                                   style: TextStyle(
                                       color: TColor.primaryText,
                                       fontSize: 22,
@@ -227,7 +239,12 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                           ),
                                         );
                                       }).toList(),
-                                      onChanged: (val) {},
+                                      onChanged: (val) {
+                                        setState(() {
+                                          selectedSize = val;
+                                        });
+                                      },
+                                      value: selectedSize,
                                       hint: Text(
                                         "- Select the size of portion -",
                                         textAlign: TextAlign.center,
@@ -265,7 +282,12 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                           ),
                                         );
                                       }).toList(),
-                                      onChanged: (val) {},
+                                      onChanged: (val) {
+                                        setState(() {
+                                          selectedIngredients = val;
+                                        });
+                                      },
+                                      value: selectedIngredients,
                                       hint: Text(
                                         "- Select the ingredients -",
                                         textAlign: TextAlign.center,
@@ -459,7 +481,23 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                                         icon:
                                                             "assets/img/shopping_add.png",
                                                         color: TColor.primary,
-                                                        onPressed: () {}),
+                                                        onPressed: () {
+                                                          final cart = context.read<CartProvider>();
+                                                          cart.addToCart(CartItem(
+                                                            name: widget.itemObj["name"]?.toString() ?? "Unknown",
+                                                            price: price,
+                                                            image: widget.itemObj["image"]?.toString() ?? "",
+                                                            qty: qty,
+                                                            size: selectedSize,
+                                                            ingredients: selectedIngredients,
+                                                          ));
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            SnackBar(
+                                                              content: Text("Đã thêm ${widget.itemObj["name"]} x$qty vào giỏ hàng"),
+                                                              duration: const Duration(seconds: 2),
+                                                            ),
+                                                          );
+                                                        }),
                                                   )
                                                 ],
                                               )),
@@ -552,19 +590,45 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                           color: TColor.white,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const MyOrderView()));
+                      Consumer<CartProvider>(
+                        builder: (context, cart, child) {
+                          return Stack(
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => const MyOrderView()));
+                                },
+                                icon: Image.asset(
+                                  "assets/img/shopping_cart.png",
+                                  width: 25,
+                                  height: 25,
+                                  color: TColor.white,
+                                ),
+                              ),
+                              if (cart.itemCount > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                                    child: Text(
+                                      cart.itemCount.toString(),
+                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
                         },
-                        icon: Image.asset(
-                          "assets/img/shopping_cart.png",
-                          width: 25,
-                          height: 25,
-                          color: TColor.white,
-                        ),
                       ),
                     ],
                   ),
