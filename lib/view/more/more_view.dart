@@ -4,7 +4,6 @@ import 'package:food_delivery/view/more/inbox_view.dart';
 import 'package:food_delivery/view/more/payment_details_view.dart';
 
 import '../../common/color_extension.dart';
-import '../../common/service_call.dart';
 import 'my_order_view.dart';
 import 'notification_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';

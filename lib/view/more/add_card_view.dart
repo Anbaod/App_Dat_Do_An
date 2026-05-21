@@ -135,7 +135,7 @@ class _AddCardViewState extends State<AddCardView> {
               const Spacer(),
               Switch(
                   value: isAnyTime,
-                  activeColor: TColor.primary,
+                  activeThumbColor: TColor.primary,
                   onChanged: (newVal) {
                     setState(() {
                       isAnyTime = newVal;

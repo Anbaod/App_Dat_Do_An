@@ -344,7 +344,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => CheckoutView(),
+                            builder: (context) => const CheckoutView(),
                           ),
                         );
                       },
