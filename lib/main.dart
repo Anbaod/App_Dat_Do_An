@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:food_delivery/common/locator.dart';
+import 'package:food_delivery/view/login/welcome_view.dart';
 import 'package:food_delivery/view/on_boarding/startup_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -6,6 +8,7 @@ SharedPreferences? prefs;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  setUpLocator();
 
   prefs = await SharedPreferences.getInstance();
 
@@ -20,6 +23,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Food Delivery',
       debugShowCheckedModeBanner: false,
+      navigatorKey: locator<NavigationService>().navigatorKey,
       theme: ThemeData(
         fontFamily: "Metropolis",
         colorScheme: ColorScheme.fromSeed(
@@ -28,6 +32,9 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const StartupView(),
+      routes: {
+        'welcome': (context) => const WelcomeView(),
+      },
     );
   }
-}
+}
