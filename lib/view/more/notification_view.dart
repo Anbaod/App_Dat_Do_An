@@ -11,155 +11,262 @@ class NotificationsView extends StatefulWidget {
 }
 
 class _NotificationsViewState extends State<NotificationsView> {
-  List notificationArr = [
+  List<Map<String, dynamic>> notificationArr = [
     {
-      "title": "Your orders has been picked up",
-      "time": "Now",
+      "title": "Đơn hàng của bạn đã được nhận",
+      "time": "Vừa xong",
+      "isRead": false,
+      "icon": Icons.receipt_long,
     },
     {
-      "title": "Your order has been delivered",
-      "time": "1 h ago",
+      "title": "Đơn hàng đang được chuẩn bị",
+      "time": "15 phút trước",
+      "isRead": false,
+      "icon": Icons.restaurant,
     },
     {
-      "title": "Your orders has been picked up",
-      "time": "3 h ago",
+      "title": "Tài xế đang trên đường giao hàng",
+      "time": "1 giờ trước",
+      "isRead": true,
+      "icon": Icons.delivery_dining,
     },
     {
-      "title": "Your order has been delivered",
-      "time": "5 h ago",
-    },
-    {
-      "title": "Your orders has been picked up",
-      "time": "05 Jun 2023",
-    },
-    {
-      "title": "Your order has been delivered",
-      "time": "05 Jun 2023",
-    },
-    {
-      "title": "Your orders has been picked up",
-      "time": "06 Jun 2023",
-    },
-    {
-      "title": "Your order has been delivered",
-      "time": "06 Jun 2023",
+      "title": "Đơn hàng đã giao thành công",
+      "time": "Hôm qua",
+      "isRead": true,
+      "icon": Icons.check_circle,
     },
   ];
+
+  int get unreadCount {
+    return notificationArr.where((item) => item["isRead"] == false).length;
+  }
+
+  void markAsRead(int index) {
+    setState(() {
+      notificationArr[index]["isRead"] = true;
+    });
+  }
+
+  void markAllRead() {
+    setState(() {
+      for (var item in notificationArr) {
+        item["isRead"] = true;
+      }
+    });
+  }
+
+  void deleteNotification(int index) {
+    setState(() {
+      notificationArr.removeAt(index);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(
-                height: 46,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: Image.asset("assets/img/btn_back.png",
-                          width: 20, height: 20),
-                    ),
-                    const SizedBox(
-                      width: 8,
-                    ),
-                    Expanded(
-                      child: Text(
-                        "Notifications",
-                        style: TextStyle(
-                            color: TColor.primaryText,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyOrderView()));
-                      },
-                      icon: Image.asset(
-                        "assets/img/shopping_cart.png",
-                        width: 25,
-                        height: 25,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              ListView.separated(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: notificationArr.length,
-                separatorBuilder: ((context, index) => Divider(
-                  indent: 25,
-                  endIndent: 25,
-                      color: TColor.secondaryText.withOpacity(0.4),
-                      height: 1,
-                    )),
-                itemBuilder: ((context, index) {
-                  var cObj = notificationArr[index] as Map? ?? {};
-                  return Container(
-                    decoration: BoxDecoration(color: index % 2 == 0 ? TColor.white : TColor.textfield ),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 15, horizontal: 25),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                              color: TColor.primary,
-                              borderRadius: BorderRadius.circular(4)),
-                        ),
-                        const SizedBox(
-                          width: 15,
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                cObj["title"].toString(),
-                                style: TextStyle(
-                                    color: TColor.primaryText,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(
-                                height: 4,
-                              ),
-                              Text(
-                                cObj["time"].toString(),
-                                style: TextStyle(
-                                    color: TColor.secondaryText,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ),
-            ],
+      backgroundColor: TColor.white,
+      appBar: AppBar(
+        backgroundColor: TColor.white,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Image.asset(
+            "assets/img/btn_back.png",
+            width: 20,
+            height: 20,
           ),
         ),
+        title: Text(
+          "Thông báo",
+          style: TextStyle(
+            color: TColor.primaryText,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: markAllRead,
+            icon: Icon(
+              Icons.done_all,
+              color: TColor.primary,
+            ),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyOrderView(),
+                ),
+              );
+            },
+            icon: Image.asset(
+              "assets/img/shopping_cart.png",
+              width: 25,
+              height: 25,
+            ),
+          ),
+        ],
+      ),
+
+      body: notificationArr.isEmpty
+          ? Center(
+        child: Text(
+          "Không có thông báo nào",
+          style: TextStyle(
+            color: TColor.secondaryText,
+            fontSize: 16,
+          ),
+        ),
+      )
+          : Column(
+        children: [
+          if (unreadCount > 0)
+            Container(
+              margin: const EdgeInsets.fromLTRB(20, 10, 20, 5),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: TColor.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.notifications_active,
+                    color: TColor.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Bạn có $unreadCount thông báo chưa đọc",
+                    style: TextStyle(
+                      color: TColor.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: notificationArr.length,
+              itemBuilder: (context, index) {
+                final item = notificationArr[index];
+                final bool isRead = item["isRead"];
+
+                return Dismissible(
+                  key: ValueKey(item["title"] + index.toString()),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (_) {
+                    deleteNotification(index);
+                  },
+                  background: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(right: 20),
+                    alignment: Alignment.centerRight,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      markAsRead(index);
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: isRead ? TColor.white : TColor.textfield,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isRead
+                              ? TColor.secondaryText.withOpacity(0.15)
+                              : TColor.primary.withOpacity(0.25),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor:
+                                TColor.primary.withOpacity(0.12),
+                                child: Icon(
+                                  item["icon"],
+                                  color: TColor.primary,
+                                ),
+                              ),
+                              if (!isRead)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: TColor.primary,
+                                      borderRadius:
+                                      BorderRadius.circular(5),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item["title"],
+                                  style: TextStyle(
+                                    color: TColor.primaryText,
+                                    fontSize: 15,
+                                    fontWeight: isRead
+                                        ? FontWeight.w600
+                                        : FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  item["time"],
+                                  style: TextStyle(
+                                    color: TColor.secondaryText,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 14,
+                            color: TColor.secondaryText,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

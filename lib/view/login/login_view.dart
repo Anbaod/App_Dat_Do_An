@@ -47,7 +47,6 @@ class _LoginViewState extends State<LoginView> {
     if (email == savedEmail && password == savedPassword) {
       await prefs.setBool("is_login", true);
 
-      // Lưu thông tin người đang đăng nhập
       await prefs.setString("current_user_name", savedName);
       await prefs.setString("current_user_email", savedEmail);
 
@@ -55,11 +54,12 @@ class _LoginViewState extends State<LoginView> {
         const SnackBar(content: Text("Đăng nhập thành công")),
       );
 
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
           builder: (context) => const MainTabView(),
         ),
+            (route) => false,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

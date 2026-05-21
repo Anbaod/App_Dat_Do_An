@@ -8,6 +8,7 @@ import 'my_order_view.dart';
 import 'notification_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../login/welcome_view.dart';
+import 'order_history_view.dart';
 
 class MoreView extends StatefulWidget {
   const MoreView({super.key});
@@ -34,7 +35,7 @@ class _MoreViewState extends State<MoreView> {
       "index": "3",
       "name": "Notifications",
       "image": "assets/img/more_notification.png",
-      "base": 15
+      "base": 5
     },
     {
       "index": "4",
@@ -52,6 +53,12 @@ class _MoreViewState extends State<MoreView> {
       "index": "6",
       "name": "Logout",
       "image": "assets/img/more_info.png",
+      "base": 0
+    },
+    {
+      "index": "7",
+      "name": "Order History",
+      "image": "assets/img/more_my_order.png",
       "base": 0
     },
   ];
@@ -149,6 +156,13 @@ class _MoreViewState extends State<MoreView> {
                                   (route) => false,
                             );
 
+                          case "7":
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const OrderHistoryView(),
+                              ),
+                            );
                             break;
 
                           default:
