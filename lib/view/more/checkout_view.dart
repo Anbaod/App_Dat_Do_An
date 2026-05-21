@@ -14,12 +14,48 @@ class CheckoutView extends StatefulWidget {
 
 class _CheckoutViewState extends State<CheckoutView> {
   List paymentArr = [
-    {"name": "Cash on delivery", "icon": "assets/img/cash.png"},
+    {"name": "Thanh toán khi nhận hàng", "icon": "assets/img/cash.png"},
     {"name": "**** **** **** 2187", "icon": "assets/img/visa_icon.png"},
     {"name": "test@gmail.com", "icon": "assets/img/paypal.png"},
   ];
 
   int selectMethod = -1;
+
+  String deliveryAddress = "Thủ Dầu Một\nBình Dương, Việt Nam";
+  Future<void> _changeAddress() async {
+    var result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ChangeAddressView(),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        deliveryAddress = result["address"];
+      });
+    }
+  }
+
+  void _sendOrder() {
+    if (selectMethod == -1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Vui lòng chọn phương thức thanh toán"),
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return const CheckoutMessageView();
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +67,8 @@ class _CheckoutViewState extends State<CheckoutView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(
-                height: 46,
-              ),
+              const SizedBox(height: 46),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 15),
                 child: Row(
@@ -42,84 +77,80 @@ class _CheckoutViewState extends State<CheckoutView> {
                       onPressed: () {
                         Navigator.pop(context);
                       },
-                      icon: Image.asset("assets/img/btn_back.png",
-                          width: 20, height: 20),
+                      icon: Image.asset(
+                        "assets/img/btn_back.png",
+                        width: 20,
+                        height: 20,
+                      ),
                     ),
-                    const SizedBox(
-                      width: 8,
-                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        "Checkout",
+                        "Thanh toán",
                         style: TextStyle(
-                            color: TColor.primaryText,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800),
+                          color: TColor.primaryText,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+                const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Delivery Address",
-                      textAlign: TextAlign.center,
-                      style:
-                          TextStyle(color: TColor.secondaryText, fontSize: 12),
+                      "Địa chỉ giao hàng",
+                      style: TextStyle(
+                        color: TColor.secondaryText,
+                        fontSize: 12,
+                      ),
                     ),
-                    const SizedBox(
-                      height: 8,
-                    ),
+                    const SizedBox(height: 8),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
-                            "653 Nostrand Ave.\nBrooklyn, NY 11216",
+                            deliveryAddress,
                             style: TextStyle(
-                                color: TColor.primaryText,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700),
+                              color: TColor.primaryText,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                        const SizedBox(
-                          width: 4,
-                        ),
+                        const SizedBox(width: 4),
                         TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ChangeAddressView()),
-                            );
-                          },
+                          onPressed: _changeAddress,
                           child: Text(
-                            "Change",
-                            textAlign: TextAlign.center,
+                            "Thay đổi",
                             style: TextStyle(
-                                color: TColor.primary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700),
+                              color: TColor.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
+
+              const SizedBox(height: 20),
+
               Container(
                 decoration: BoxDecoration(color: TColor.textfield),
                 height: 8,
               ),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: Column(
@@ -129,219 +160,170 @@ class _CheckoutViewState extends State<CheckoutView> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Payment method",
-                          textAlign: TextAlign.center,
+                          "Phương thức thanh toán",
                           style: TextStyle(
-                              color: TColor.secondaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500),
+                            color: TColor.secondaryText,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         TextButton.icon(
                           onPressed: () {},
                           icon: Icon(Icons.add, color: TColor.primary),
                           label: Text(
-                            "Add Card",
+                            "Thêm thẻ",
                             style: TextStyle(
-                                color: TColor.primary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700),
+                              color: TColor.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        )
+                        ),
                       ],
                     ),
+
                     ListView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        itemCount: paymentArr.length,
-                        itemBuilder: (context, index) {
-                          var pObj = paymentArr[index] as Map? ?? {};
-                          return Container(
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: paymentArr.length,
+                      itemBuilder: (context, index) {
+                        var pObj = paymentArr[index] as Map? ?? {};
+
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              selectMethod = index;
+                            });
+                          },
+                          child: Container(
                             margin: const EdgeInsets.symmetric(vertical: 8.0),
                             padding: const EdgeInsets.symmetric(
-                                vertical: 8.0, horizontal: 15.0),
+                              vertical: 8.0,
+                              horizontal: 15.0,
+                            ),
                             decoration: BoxDecoration(
-                                color: TColor.textfield,
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(
-                                    color:
-                                        TColor.secondaryText.withOpacity(0.2))),
+                              color: TColor.textfield,
+                              borderRadius: BorderRadius.circular(5),
+                              border: Border.all(
+                                color: TColor.secondaryText.withOpacity(0.2),
+                              ),
+                            ),
                             child: Row(
                               children: [
-                                Image.asset(pObj["icon"].toString(),
-                                    width: 50, height: 20, fit: BoxFit.contain),
-                                // const SizedBox(width: 8),
+                                Image.asset(
+                                  pObj["icon"].toString(),
+                                  width: 50,
+                                  height: 20,
+                                  fit: BoxFit.contain,
+                                ),
+
                                 Expanded(
                                   child: Text(
-                                    pObj["name"],
+                                    pObj["name"].toString(),
                                     style: TextStyle(
-                                        color: TColor.primaryText,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500),
+                                      color: TColor.primaryText,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
 
-                                InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      selectMethod = index;
-                                    });
-                                  },
-                                  child: Icon(
-                                    selectMethod == index
-                                        ? Icons.radio_button_on
-                                        : Icons.radio_button_off,
-                                    color: TColor.primary,
-                                    size: 15,
-                                  ),
-                                )
+                                Icon(
+                                  selectMethod == index
+                                      ? Icons.radio_button_on
+                                      : Icons.radio_button_off,
+                                  color: TColor.primary,
+                                  size: 18,
+                                ),
                               ],
                             ),
-                          );
-                        })
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
+
+              const SizedBox(height: 20),
+
               Container(
                 decoration: BoxDecoration(color: TColor.textfield),
                 height: 8,
               ),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Sub Total",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          "\$68",
-                          style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 8,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Delivery Cost",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          "\$2",
-                          style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 8,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Discount",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          "-\$4",
-                          style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
+                    const SizedBox(height: 15),
+
+                    _buildPriceRow("Tạm tính", "\$68"),
+                    const SizedBox(height: 8),
+
+                    _buildPriceRow("Phí giao hàng", "\$2"),
+                    const SizedBox(height: 8),
+
+                    _buildPriceRow("Giảm giá", "-\$4"),
+                    const SizedBox(height: 15),
+
                     Divider(
                       color: TColor.secondaryText.withOpacity(0.5),
                       height: 1,
                     ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Total",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          "\$66",
-                          style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700),
-                        )
-                      ],
-                    ),
+
+                    const SizedBox(height: 15),
+
+                    _buildPriceRow("Tổng cộng", "\$66", isTotal: true),
                   ],
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
+
+              const SizedBox(height: 20),
+
               Container(
                 decoration: BoxDecoration(color: TColor.textfield),
                 height: 8,
               ),
+
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
+                const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
                 child: RoundButton(
-                    title: "Send Order",
-                    onPressed: () {
-                      showModalBottomSheet(
-                          context: context,
-                          backgroundColor: Colors.transparent,
-                          isScrollControlled: true,
-                          builder: (context) {
-                            return const CheckoutMessageView();
-                          });
-                    }),
+                  title: "Đặt hàng",
+                  onPressed: _sendOrder,
+                ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPriceRow(String title, String price, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: TColor.primaryText,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          price,
+          style: TextStyle(
+            color: TColor.primaryText,
+            fontSize: isTotal ? 15 : 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

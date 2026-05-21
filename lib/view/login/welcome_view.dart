@@ -35,24 +35,29 @@ class _WelcomeViewState extends State<WelcomeView> {
               ),
             ],
           ),
+
           SizedBox(
             height: media.width * 0.1,
           ),
+
           Text(
-            "Discover the best foods from over 1,000\nrestaurants and fast delivery to your\ndoorstep",
+            "Khám phá những món ăn ngon nhất từ hơn 1.000 nhà hàng và giao hàng nhanh đến tận cửa nhà bạn",
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: TColor.secondaryText,
-                fontSize: 13,
-                fontWeight: FontWeight.w500),
+              color: TColor.secondaryText,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
           ),
+
           SizedBox(
             height: media.width * 0.1,
           ),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 25),
             child: RoundButton(
-              title: "Login",
+              title: "Đăng nhập",
               onPressed: () {
                 Navigator.push(
                   context,
@@ -63,16 +68,18 @@ class _WelcomeViewState extends State<WelcomeView> {
               },
             ),
           ),
+
           const SizedBox(
             height: 20,
           ),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 25),
             child: RoundButton(
-              title: "Create an Account",
+              title: "Tạo tài khoản",
               type: RoundButtonType.textPrimary,
               onPressed: () {
-                 Navigator.push(
+                Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const SignUpView(),

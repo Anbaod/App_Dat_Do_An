@@ -7,6 +7,8 @@ import '../../common/color_extension.dart';
 import '../../common/service_call.dart';
 import 'my_order_view.dart';
 import 'notification_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../login/welcome_view.dart';
 
 class MoreView extends StatefulWidget {
   const MoreView({super.key});
@@ -104,7 +106,7 @@ class _MoreViewState extends State<MoreView> {
                     var mObj = moreArr[index] as Map? ?? {};
                     var countBase = mObj["base"] as int? ?? 0;
                     return InkWell(
-                      onTap: () {
+                      onTap: () async {
                         switch (mObj["index"].toString()) {
                           case "1":
                             Navigator.push(
@@ -137,7 +139,18 @@ class _MoreViewState extends State<MoreView> {
                                 MaterialPageRoute(
                                     builder: (context) => const AboutUsView()));
                           case "6":
-                            ServiceCall.logout();
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.remove("user_login");
+
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const WelcomeView(),
+                              ),
+                                  (route) => false,
+                            );
+
+                            break;
 
                           default:
                         }
