@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 import 'package:food_delivery/view/login/login_view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:food_delivery/database/db_helper.dart';
+import 'package:food_delivery/common/email_helper.dart';
 import '../../common_widget/round_textfield.dart';
 
 class SignUpView extends StatefulWidget {
@@ -48,22 +48,35 @@ class _SignUpViewState extends State<SignUpView> {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      await DBHelper.instance.insertUser(
+        name: name,
+        email: email,
+        password: password,
+        phone: mobile,
+        address: address,
+      );
 
-    await prefs.setString("user_name", name);
-    await prefs.setString("user_email", email);
-    await prefs.setString("user_mobile", mobile);
-    await prefs.setString("user_address", address);
-    await prefs.setString("user_password", password);
+      // Send Welcome Email in background
+      EmailHelper.sendWelcomeEmail(email, name);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Đăng ký thành công")),
-    );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Đăng ký thành công! Đã gửi email chào mừng.")),
+        );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginView()),
-    );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginView()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Lỗi đăng ký: Email có thể đã tồn tại")),
+        );
+      }
+    }
   }
 
   @override

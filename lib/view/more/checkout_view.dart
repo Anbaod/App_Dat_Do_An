@@ -5,6 +5,7 @@ import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 import 'package:food_delivery/database/db_helper.dart';
 
+import '../../database/db_helper.dart';
 import 'change_address_view.dart';
 import 'checkout_message_view.dart';
 
@@ -25,6 +26,13 @@ class _CheckoutViewState extends State<CheckoutView> {
   int selectMethod = -1;
 
   String deliveryAddress = "Thủ Dầu Một\nBình Dương, Việt Nam";
+
+  double subTotal = 68;
+  double deliveryCost = 2;
+  double discount = 4;
+
+  double get total => subTotal + deliveryCost - discount;
+
   Future<void> _changeAddress() async {
     var result = await Navigator.push(
       context,
@@ -156,9 +164,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
@@ -170,7 +176,6 @@ class _CheckoutViewState extends State<CheckoutView> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 4),
                         TextButton(
                           onPressed: _changeAddress,
                           child: Text(
@@ -198,7 +203,6 @@ class _CheckoutViewState extends State<CheckoutView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -232,7 +236,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                       shrinkWrap: true,
                       itemCount: paymentArr.length,
                       itemBuilder: (context, index) {
-                        var pObj = paymentArr[index] as Map? ?? {};
+                        var pObj = paymentArr[index];
 
                         return InkWell(
                           onTap: () {
@@ -241,10 +245,10 @@ class _CheckoutViewState extends State<CheckoutView> {
                             });
                           },
                           child: Container(
-                            margin: const EdgeInsets.symmetric(vertical: 8.0),
+                            margin: const EdgeInsets.symmetric(vertical: 8),
                             padding: const EdgeInsets.symmetric(
-                              vertical: 8.0,
-                              horizontal: 15.0,
+                              vertical: 8,
+                              horizontal: 15,
                             ),
                             decoration: BoxDecoration(
                               color: TColor.textfield,
@@ -261,7 +265,6 @@ class _CheckoutViewState extends State<CheckoutView> {
                                   height: 20,
                                   fit: BoxFit.contain,
                                 ),
-
                                 Expanded(
                                   child: Text(
                                     pObj["name"].toString(),
@@ -272,7 +275,6 @@ class _CheckoutViewState extends State<CheckoutView> {
                                     ),
                                   ),
                                 ),
-
                                 Icon(
                                   selectMethod == index
                                       ? Icons.radio_button_on
@@ -300,7 +302,6 @@ class _CheckoutViewState extends State<CheckoutView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 15),
 

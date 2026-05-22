@@ -10,7 +10,11 @@ import 'item_details_view.dart';
 
 class MenuItemsView extends StatefulWidget {
   final Map mObj;
-  const MenuItemsView({super.key, required this.mObj});
+
+  const MenuItemsView({
+    super.key,
+    required this.mObj,
+  });
 
   @override
   State<MenuItemsView> createState() => _MenuItemsViewState();
@@ -19,10 +23,11 @@ class MenuItemsView extends StatefulWidget {
 class _MenuItemsViewState extends State<MenuItemsView> {
   TextEditingController txtSearch = TextEditingController();
 
-  List menuItemsArr = [
+  List<Map<String, dynamic>> allItems = [
     {
-      "image": "assets/img/dess_1.png",
-      "name": "French Apple Pie",
+      "category": "Food",
+      "image": "assets/img/menu_1.png",
+      "name": "Beef Burger",
       "rate": "4.9",
       "rating": "124",
       "type": "Minute by tuk tuk",
@@ -30,8 +35,32 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "price": 12.0
     },
     {
-      "image": "assets/img/dess_2.png",
-      "name": "Dark Chocolate Cake",
+      "category": "Food",
+      "image": "assets/img/menu_2.png",
+      "name": "Classic Burger",
+      "rate": "4.8",
+      "rating": "98",
+      "type": "King Burgers",
+      "food_type": "Fast Food",
+      "price": 14.0,
+      "description": "Burger truyền thống dễ ăn, phù hợp cho mọi bữa ăn.",
+    },
+    {
+      "category": "Food",
+      "image": "assets/img/menu_3.png",
+      "name": "Pizza Hải Sản",
+      "rate": "4.7",
+      "rating": "102",
+      "type": "Pizza House",
+      "food_type": "Pizza",
+      "price": 22.0,
+      "description": "Pizza hải sản với tôm, mực, phô mai và sốt cà chua.",
+    },
+
+    {
+      "category": "Beverages",
+      "image": "assets/img/offer_1.png",
+      "name": "Cà Phê Sữa Đá",
       "rate": "4.9",
       "rating": "124",
       "type": "Cakes by Tella",
@@ -39,24 +68,28 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "price": 18.0
     },
     {
+      "category": "Beverages",
       "image": "assets/img/dess_3.png",
       "name": "Street Shake",
-      "rate": "4.9",
-      "rating": "124",
+      "rate": "4.7",
+      "rating": "86",
       "type": "Café Racer",
       "food_type": "Desserts",
       "price": 8.0
     },
     {
-      "image": "assets/img/dess_4.png",
-      "name": "Fudgy Chewy Brownies",
+      "category": "Beverages",
+      "image": "assets/img/menu_3.png",
+      "name": "Trà Sữa Trân Châu",
       "rate": "4.9",
       "rating": "124",
       "type": "Minute by tuk tuk",
       "food_type": "Desserts",
       "price": 14.0
     },
+
     {
+      "category": "Desserts",
       "image": "assets/img/dess_1.png",
       "name": "French Apple Pie",
       "rate": "4.9",
@@ -66,26 +99,30 @@ class _MenuItemsViewState extends State<MenuItemsView> {
       "price": 12.0
     },
     {
+      "category": "Desserts",
       "image": "assets/img/dess_2.png",
       "name": "Dark Chocolate Cake",
-      "rate": "4.9",
-      "rating": "124",
+      "rate": "4.8",
+      "rating": "98",
       "type": "Cakes by Tella",
       "food_type": "Desserts",
       "price": 18.0
     },
     {
-      "image": "assets/img/dess_3.png",
-      "name": "Street Shake",
+      "category": "Desserts",
+      "image": "assets/img/dess_4.png",
+      "name": "Fudgy Chewy Brownies",
       "rate": "4.9",
       "rating": "124",
       "type": "Café Racer",
       "food_type": "Desserts",
       "price": 8.0
     },
+
     {
-      "image": "assets/img/dess_4.png",
-      "name": "Fudgy Chewy Brownies",
+      "category": "Promotions",
+      "image": "assets/img/offer_1.png",
+      "name": "Café de Noires",
       "rate": "4.9",
       "rating": "124",
       "type": "Minute by tuk tuk",
@@ -94,17 +131,62 @@ class _MenuItemsViewState extends State<MenuItemsView> {
     },
   ];
 
+  List<Map<String, dynamic>> categoryItems = [];
+  List<Map<String, dynamic>> filteredItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    final String category = widget.mObj["name"]?.toString() ?? "Food";
+
+    categoryItems = allItems.where((item) {
+      return item["category"]?.toString() == category;
+    }).toList();
+
+    filteredItems = categoryItems;
+  }
+
+  void searchFood(String value) {
+    setState(() {
+      if (value.trim().isEmpty) {
+        filteredItems = categoryItems;
+        return;
+      }
+
+      final keyword = value.toLowerCase().trim();
+
+      filteredItems = categoryItems.where((item) {
+        final name = item["name"]?.toString().toLowerCase() ?? "";
+        final type = item["type"]?.toString().toLowerCase() ?? "";
+        final foodType = item["food_type"]?.toString().toLowerCase() ?? "";
+
+        return name.contains(keyword) ||
+            type.contains(keyword) ||
+            foodType.contains(keyword);
+      }).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    txtSearch.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final String title = widget.mObj["name"]?.toString() ?? "Món ăn";
+
     return Scaffold(
+      backgroundColor: TColor.white,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
             children: [
-              const SizedBox(
-                height: 46,
-              ),
+              const SizedBox(height: 46),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
@@ -113,19 +195,23 @@ class _MenuItemsViewState extends State<MenuItemsView> {
                       onPressed: () {
                         Navigator.pop(context);
                       },
-                      icon: Image.asset("assets/img/btn_back.png",
-                          width: 20, height: 20),
+                      icon: Image.asset(
+                        "assets/img/btn_back.png",
+                        width: 20,
+                        height: 20,
+                      ),
                     ),
-                    const SizedBox(
-                      width: 8,
-                    ),
+
+                    const SizedBox(width: 8),
+
                     Expanded(
                       child: Text(
-                        widget.mObj["name"].toString(),
+                        title,
                         style: TextStyle(
-                            color: TColor.primaryText,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800),
+                          color: TColor.primaryText,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     Consumer<CartProvider>(
@@ -180,14 +266,15 @@ class _MenuItemsViewState extends State<MenuItemsView> {
                   ],
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
+
+              const SizedBox(height: 20),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: RoundTextfield(
-                  hintText: "Search Food",
+                  hintText: "Tìm món ăn",
                   controller: txtSearch,
+                  onChanged: searchFood,
                   left: Container(
                     alignment: Alignment.center,
                     width: 30,
@@ -199,16 +286,28 @@ class _MenuItemsViewState extends State<MenuItemsView> {
                   ),
                 ),
               ),
-              const SizedBox(
-                height: 15,
-              ),
-              ListView.builder(
+
+              const SizedBox(height: 15),
+
+              filteredItems.isEmpty
+                  ? Padding(
+                padding: const EdgeInsets.all(30),
+                child: Text(
+                  "Không tìm thấy món ăn",
+                  style: TextStyle(
+                    color: TColor.secondaryText,
+                    fontSize: 15,
+                  ),
+                ),
+              )
+                  : ListView.builder(
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
-                itemCount: menuItemsArr.length,
-                itemBuilder: ((context, index) {
-                  var mObj = menuItemsArr[index] as Map? ?? {};
+                itemCount: filteredItems.length,
+                itemBuilder: (context, index) {
+                  var mObj = filteredItems[index];
+
                   return MenuItemRow(
                     mObj: mObj,
                     onTap: () {
@@ -219,7 +318,7 @@ class _MenuItemsViewState extends State<MenuItemsView> {
                       );
                     },
                   );
-                }),
+                },
               ),
             ],
           ),

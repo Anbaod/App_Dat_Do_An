@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
-
 import '../common/color_extension.dart';
 
 class RoundTextfield extends StatelessWidget {
   final TextEditingController? controller;
   final String hintText;
-  final TextInputType? keyboardType;
-  final bool obscureText;
   final Widget? left;
+  final Widget? right;
+  final bool obscureText;
+  final TextInputType keyboardType;
+  final ValueChanged<String>? onChanged;
 
   const RoundTextfield({
     super.key,
     required this.hintText,
     this.controller,
-    this.keyboardType,
-    this.obscureText = false,
     this.left,
+    this.right,
+    this.obscureText = false,
+    this.keyboardType = TextInputType.text,
+    this.onChanged,
   });
 
   @override
@@ -23,29 +26,23 @@ class RoundTextfield extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: TColor.textfield,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(28),
       ),
-
       child: TextField(
-        autocorrect: false,
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
-
+        onChanged: onChanged,
         decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
           hintText: hintText,
-          prefixIcon: left,
-
           hintStyle: TextStyle(
             color: TColor.placeholder,
             fontSize: 14,
-            fontWeight: FontWeight.w500,
           ),
+          prefixIcon: left,
+          suffixIcon: right,
+          border: InputBorder.none,
         ),
       ),
     );
@@ -53,19 +50,25 @@ class RoundTextfield extends StatelessWidget {
 }
 
 class RoundTitleTextfield extends StatelessWidget {
+  final TextEditingController? controller;
   final String title;
   final String hintText;
-  final TextEditingController? controller;
-  final TextInputType? keyboardType;
+  final Widget? left;
+  final Widget? right;
   final bool obscureText;
+  final TextInputType keyboardType;
+  final ValueChanged<String>? onChanged;
 
   const RoundTitleTextfield({
     super.key,
     required this.title,
     required this.hintText,
     this.controller,
-    this.keyboardType,
+    this.left,
+    this.right,
     this.obscureText = false,
+    this.keyboardType = TextInputType.text,
+    this.onChanged,
   });
 
   @override
@@ -77,20 +80,19 @@ class RoundTitleTextfield extends StatelessWidget {
           title,
           style: TextStyle(
             color: TColor.secondaryText,
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
-
-        const SizedBox(
-          height: 8,
-        ),
-
+        const SizedBox(height: 8),
         RoundTextfield(
-          hintText: hintText,
           controller: controller,
-          keyboardType: keyboardType,
+          hintText: hintText,
+          left: left,
+          right: right,
           obscureText: obscureText,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
         ),
       ],
     );
