@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:food_delivery/database/db_helper.dart';
 
 import '../../common/color_extension.dart';
 import '../../common_widget/round_textfield.dart';
@@ -38,6 +39,27 @@ class _ProfileViewState extends State<ProfileView> {
 
   Future<void> loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString("current_user_email") ?? prefs.getString("user_email");
+
+    if (email != null && email.isNotEmpty) {
+      try {
+        final user = await DBHelper.instance.getUserByEmail(email);
+        if (user != null) {
+          setState(() {
+            userName = user["name"] ?? "Người dùng";
+            txtName.text = user["name"] ?? "";
+            txtEmail.text = user["email"] ?? "";
+            txtMobile.text = user["phone"] ?? "";
+            txtAddress.text = user["address"] ?? "";
+            txtPassword.text = user["password"] ?? "";
+            txtConfirmPassword.text = user["password"] ?? "";
+          });
+          return;
+        }
+      } catch (e) {
+        debugPrint("Lỗi loadUserInfo từ DB: $e");
+      }
+    }
 
     setState(() {
       userName = prefs.getString("current_user_name") ??
@@ -61,6 +83,8 @@ class _ProfileViewState extends State<ProfileView> {
 
   Future<void> saveUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt("current_user_id");
+    final originalEmail = prefs.getString("current_user_email") ?? prefs.getString("user_email") ?? "";
 
     if (txtPassword.text.trim() != txtConfirmPassword.text.trim()) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -71,23 +95,79 @@ class _ProfileViewState extends State<ProfileView> {
       return;
     }
 
-    await prefs.setString("user_name", txtName.text.trim());
-    await prefs.setString("user_email", txtEmail.text.trim());
-    await prefs.setString("user_mobile", txtMobile.text.trim());
-    await prefs.setString("user_address", txtAddress.text.trim());
-    await prefs.setString("user_password", txtPassword.text.trim());
-    await prefs.setString("current_user_name", txtName.text.trim());
-    await prefs.setString("current_user_email", txtEmail.text.trim());
+    final newName = txtName.text.trim();
+    final newEmail = txtEmail.text.trim();
+    final newPhone = txtMobile.text.trim();
+    final newAddress = txtAddress.text.trim();
+    final newPassword = txtPassword.text.trim();
 
-    setState(() {
-      userName = txtName.text.trim();
-    });
+    if (newName.isEmpty || newEmail.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Tên và Email không được để trống"),
+        ),
+      );
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Cập nhật thông tin thành công"),
-      ),
-    );
+    try {
+      if (userId != null) {
+        await DBHelper.instance.updateUser(
+          id: userId,
+          name: newName,
+          email: newEmail,
+          phone: newPhone,
+          address: newAddress,
+        );
+        if (newPassword.isNotEmpty) {
+          await DBHelper.instance.updateUserPassword(newEmail, newPassword);
+        }
+      } else if (originalEmail.isNotEmpty) {
+        final dbUser = await DBHelper.instance.getUserByEmail(originalEmail);
+        if (dbUser != null) {
+          final dbId = dbUser["id"] as int;
+          await DBHelper.instance.updateUser(
+            id: dbId,
+            name: newName,
+            email: newEmail,
+            phone: newPhone,
+            address: newAddress,
+          );
+          if (newPassword.isNotEmpty) {
+            await DBHelper.instance.updateUserPassword(newEmail, newPassword);
+          }
+          await prefs.setInt("current_user_id", dbId);
+        }
+      }
+
+      await prefs.setString("user_name", newName);
+      await prefs.setString("user_email", newEmail);
+      await prefs.setString("user_mobile", newPhone);
+      await prefs.setString("user_address", newAddress);
+      await prefs.setString("user_password", newPassword);
+      await prefs.setString("current_user_name", newName);
+      await prefs.setString("current_user_email", newEmail);
+
+      setState(() {
+        userName = newName;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Cập nhật thông tin thành công"),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Lỗi lưu thông tin: $e"),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> signOut() async {

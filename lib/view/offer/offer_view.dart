@@ -4,6 +4,8 @@ import 'package:food_delivery/common_widget/round_button.dart';
 
 import '../../common_widget/popular_resutaurant_row.dart';
 import '../more/my_order_view.dart';
+import '../../database/db_helper.dart';
+import '../menu/item_details_view.dart';
 
 class OfferView extends StatefulWidget {
   const OfferView({super.key});
@@ -15,162 +17,45 @@ class OfferView extends StatefulWidget {
 class _OfferViewState extends State<OfferView> {
   TextEditingController txtSearch = TextEditingController();
 
-  List<Map<String, dynamic>> offerArr = [
-    {
-      "image": "assets/img/offer_1.png",
-      "name": "Café de Noires",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafe",
-      "food_type": "Western Food",
-      "discount": "Giảm 20%",
-    },
-    {
-      "image": "assets/img/offer_2.png",
-      "name": "Isso",
-      "rate": "4.8",
-      "rating": "98",
-      "type": "Cafe",
-      "food_type": "Fast Food",
-      "discount": "Mua 1 tặng 1",
-    },
-    {
-      "image": "assets/img/offer_3.png",
-      "name": "Cafe Beans",
-      "rate": "4.7",
-      "rating": "86",
-      "type": "Cafe",
-      "food_type": "Coffee",
-      "discount": "Freeship",
-    },
-    {
-      "name": "Beef Burger",
-      "image": "assets/img/menu_1.png",
-      "price": 16.0,
-      "rate": "4.9",
-      "rating": "120",
-      "type": "Burger",
-      "food_type": "Fast Food",
-      "discount": "Giảm 15%",
-    },
-    {
-      "name": "Classic Burger",
-      "image": "assets/img/menu_2.png",
-      "price": 14.0,
-      "rate": "4.8",
-      "rating": "95",
-      "type": "Burger",
-      "food_type": "Fast Food",
-      "discount": "Freeship",
-    },
-    {
-      "name": "Cheese Chicken Burger",
-      "image": "assets/img/menu_3.png",
-      "price": 17.0,
-      "rate": "4.7",
-      "rating": "88",
-      "type": "Burger",
-      "food_type": "Fast Food",
-      "discount": "Giảm 10%",
-    },
-    {
-      "name": "Chicken Legs Basket",
-      "image": "assets/img/menu_1.png",
-      "price": 15.0,
-      "rate": "4.6",
-      "rating": "76",
-      "type": "Chicken",
-      "food_type": "Fried Food",
-      "discount": "Giảm 12%",
-    },
-    {
-      "name": "French Fries Large",
-      "image": "assets/img/menu_2.png",
-      "price": 6.0,
-      "rate": "4.5",
-      "rating": "64",
-      "type": "Snack",
-      "food_type": "Fast Food",
-      "discount": "Giảm 5%",
-    },
-    {
-      "name": "Pizza Hải Sản",
-      "image": "assets/img/menu_3.png",
-      "price": 22.0,
-      "rate": "4.8",
-      "rating": "140",
-      "type": "Pizza",
-      "food_type": "Italian Food",
-      "discount": "Mua 1 tặng 1",
-    },
-    {
-      "name": "Mì Ý Bò Bằm",
-      "image": "assets/img/menu_1.png",
-      "price": 18.0,
-      "rate": "4.7",
-      "rating": "102",
-      "type": "Pasta",
-      "food_type": "Western Food",
-      "discount": "Giảm 18%",
-    },
-    {
-      "name": "Gà Rán Giòn Cay",
-      "image": "assets/img/menu_2.png",
-      "price": 13.0,
-      "rate": "4.6",
-      "rating": "89",
-      "type": "Chicken",
-      "food_type": "Fast Food",
-      "discount": "Freeship",
-    },
-    {
-      "name": "Trà Sữa Trân Châu",
-      "image": "assets/img/menu_3.png",
-      "price": 5.0,
-      "rate": "4.9",
-      "rating": "210",
-      "type": "Drink",
-      "food_type": "Beverage",
-      "discount": "Giảm 20%",
-    },
-    {
-      "name": "Cà Phê Sữa Đá",
-      "image": "assets/img/menu_1.png",
-      "price": 4.0,
-      "rate": "4.8",
-      "rating": "180",
-      "type": "Drink",
-      "food_type": "Coffee",
-      "discount": "Giảm 10%",
-    },
-    {
-      "name": "Bánh Mì Thịt Nướng",
-      "image": "assets/img/menu_2.png",
-      "price": 7.0,
-      "rate": "4.7",
-      "rating": "130",
-      "type": "Vietnamese Food",
-      "food_type": "Street Food",
-      "discount": "Freeship",
-    },
-    {
-      "name": "Cơm Gà Xối Mỡ",
-      "image": "assets/img/menu_3.png",
-      "price": 12.0,
-      "rate": "4.6",
-      "rating": "118",
-      "type": "Rice",
-      "food_type": "Vietnamese Food",
-      "discount": "Giảm 15%",
-    },
-  ];
-
+  List<Map<String, dynamic>> offerArr = [];
   List<Map<String, dynamic>> filteredOffers = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    filteredOffers = offerArr;
+    loadOffers();
+  }
+
+  Future<void> loadOffers() async {
+    try {
+      final dbOffers = await DBHelper.instance.getFoodsByCategory("Promotions");
+      final List<Map<String, dynamic>> loaded = dbOffers.map((item) {
+        final Map<String, dynamic> mutableItem = Map<String, dynamic>.from(item);
+        final String name = mutableItem["name"]?.toString() ?? "";
+        if (name.contains("Combo")) {
+          mutableItem["discount"] = "Giảm 20%";
+        } else if (name.contains("Café") || name.contains("Cafe") || name.contains("Coffee")) {
+          mutableItem["discount"] = "Giảm 10%";
+        } else if (name.contains("Isso")) {
+          mutableItem["discount"] = "Mua 1 tặng 1";
+        } else {
+          mutableItem["discount"] = "Freeship";
+        }
+        return mutableItem;
+      }).toList();
+
+      setState(() {
+        offerArr = loaded;
+        filteredOffers = loaded;
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("Error loading offers: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   void searchOffer(String value) {
@@ -267,11 +152,14 @@ class _OfferViewState extends State<OfferView> {
                 title: "Dùng ưu đãi",
                 onPressed: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Đã chọn ưu đãi: $discount"),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ItemDetailsView(mObj: item),
                     ),
-                  );
+                  ).then((_) {
+                    loadOffers();
+                  });
                 },
               ),
             ],
@@ -404,7 +292,9 @@ class _OfferViewState extends State<OfferView> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        "Hôm nay có ${offerArr.length} ưu đãi dành cho bạn",
+                        isLoading
+                            ? "Đang tải ưu đãi..."
+                            : "Hôm nay có ${offerArr.length} ưu đãi dành cho bạn",
                         style: TextStyle(
                           color: TColor.primary,
                           fontSize: 14,
@@ -419,64 +309,69 @@ class _OfferViewState extends State<OfferView> {
 
             const SizedBox(height: 15),
 
-            filteredOffers.isEmpty
-                ? Padding(
-              padding: const EdgeInsets.all(30),
-              child: Center(
-                child: Text(
-                  "Không tìm thấy ưu đãi phù hợp",
-                  style: TextStyle(
-                    color: TColor.secondaryText,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            )
-                : ListView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: filteredOffers.length,
-              itemBuilder: (context, index) {
-                var pObj = filteredOffers[index];
-                final String discount =
-                    pObj["discount"]?.toString() ?? "Ưu đãi";
-
-                return Stack(
-                  children: [
-                    PopularRestaurantRow(
-                      pObj: pObj,
-                      onTap: () {
-                        showOfferDetail(pObj);
-                      },
-                    ),
-
-                    Positioned(
-                      top: 15,
-                      right: 20,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: TColor.primary,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          discount,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+            isLoading
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : filteredOffers.isEmpty
+                    ? Padding(
+                  padding: const EdgeInsets.all(30),
+                  child: Center(
+                    child: Text(
+                      "Không tìm thấy ưu đãi phù hợp",
+                      style: TextStyle(
+                        color: TColor.secondaryText,
+                        fontSize: 15,
                       ),
                     ),
-                  ],
-                );
-              },
-            ),
+                  ),
+                )
+                    : ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: filteredOffers.length,
+                  itemBuilder: (context, index) {
+                    var pObj = filteredOffers[index];
+                    final String discount =
+                        pObj["discount"]?.toString() ?? "Ưu đãi";
+
+                    return Stack(
+                      children: [
+                        PopularRestaurantRow(
+                          pObj: pObj,
+                          onTap: () {
+                            showOfferDetail(pObj);
+                          },
+                        ),
+
+                        Positioned(
+                          top: 15,
+                          right: 20,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: TColor.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              discount,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
           ],
         ),
       ),

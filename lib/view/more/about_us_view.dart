@@ -12,11 +12,11 @@ class AboutUsView extends StatefulWidget {
 
 class _AboutUsViewState extends State<AboutUsView> {
   List aboutTextArr = [
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+    "Chào mừng bạn đến với FastFood, ứng dụng đặt đồ ăn nhanh hàng đầu tại Việt Nam, mang đến cho bạn hàng nghìn lựa chọn món ăn ngon từ burger, pizza, mì ý cho đến đồ uống mát lạnh và đồ tráng miệng ngọt ngào.",
+    "Chúng tôi cam kết cung cấp dịch vụ đặt món nhanh chóng, giao hàng siêu tốc trong vòng 30 phút để đảm bảo món ăn luôn nóng hổi và giữ trọn hương vị tươi ngon khi đến tay khách hàng.",
+    "Mỗi nhà hàng và món ăn trên hệ thống đều được tuyển chọn kỹ lưỡng, đảm bảo quy trình vệ sinh an toàn thực phẩm khắt khe và chất lượng nguyên liệu đạt chuẩn cao nhất.",
+    "Với giao diện thân thiện, tính năng thông minh giúp tìm kiếm món ăn dễ dàng cùng hàng loạt chương trình ưu đãi hấp dẫn, FastFood sẽ mang đến cho bạn trải nghiệm ẩm thực trọn vẹn và tuyệt vời.",
+    "Đội ngũ hỗ trợ khách hàng của chúng tôi luôn sẵn sàng phục vụ 24/7 để giải quyết nhanh chóng mọi thắc mắc và đảm bảo sự hài lòng tuyệt đối của bạn trong mỗi chuyến hành trình ẩm thực.",
   ];
 
   @override
@@ -47,7 +47,7 @@ class _AboutUsViewState extends State<AboutUsView> {
                     ),
                     Expanded(
                       child: Text(
-                        "About Us",
+                        "Về chúng tôi",
                         style: TextStyle(
                             color: TColor.primaryText,
                             fontSize: 20,

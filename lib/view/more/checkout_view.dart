@@ -93,11 +93,17 @@ class _CheckoutViewState extends State<CheckoutView> {
     }
 
     try {
-      await DBHelper.instance.insertOrderWithItems(
+      final orderId = await DBHelper.instance.insertOrderWithItems(
         address: deliveryAddress,
         paymentMethod: paymentArr[selectMethod]["name"],
         total: total,
         items: cartItems,
+      );
+
+      // Thêm thông báo đặt hàng thành công vào SQLite
+      await DBHelper.instance.insertNotification(
+        title: "Đặt hàng thành công",
+        message: "Đơn hàng #$orderId trị giá \$${total.toStringAsFixed(2)} đã được tiếp nhận và đang xử lý.",
       );
 
       // Xóa giỏ hàng sau khi đặt hàng thành công

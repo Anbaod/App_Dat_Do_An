@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/view/more/about_us_view.dart';
 import 'package:food_delivery/view/more/inbox_view.dart';
 import 'package:food_delivery/view/more/payment_details_view.dart';
+import 'package:food_delivery/view/more/favorites_view.dart';
 
 import '../../common/color_extension.dart';
 import 'my_order_view.dart';
@@ -9,6 +10,8 @@ import 'notification_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../login/welcome_view.dart';
 import 'order_history_view.dart';
+import 'package:sqflite/sqflite.dart';
+import '../../database/db_helper.dart';
 
 class MoreView extends StatefulWidget {
   const MoreView({super.key});
@@ -18,6 +21,8 @@ class MoreView extends StatefulWidget {
 }
 
 class _MoreViewState extends State<MoreView> {
+  int unreadNotificationsCount = 0;
+
   List moreArr = [
     {
       "index": "1",
@@ -35,12 +40,18 @@ class _MoreViewState extends State<MoreView> {
       "index": "3",
       "name": "Notifications",
       "image": "assets/img/more_notification.png",
-      "base": 5
+      "base": 0
     },
     {
       "index": "4",
       "name": "Inbox",
       "image": "assets/img/more_inbox.png",
+      "base": 0
+    },
+    {
+      "index": "8",
+      "name": "Favorites",
+      "image": "assets/img/fav_icon.png",
       "base": 0
     },
     {
@@ -62,6 +73,28 @@ class _MoreViewState extends State<MoreView> {
       "base": 0
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    loadUnreadNotificationsCount();
+  }
+
+  Future<void> loadUnreadNotificationsCount() async {
+    try {
+      final db = await DBHelper.instance.database;
+      final count = Sqflite.firstIntValue(
+        await db.rawQuery("SELECT COUNT(*) FROM notifications WHERE is_read = 0"),
+      ) ?? 0;
+      if (mounted) {
+        setState(() {
+          unreadNotificationsCount = count;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading unread notifications count: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +144,9 @@ class _MoreViewState extends State<MoreView> {
                   itemBuilder: (context, index) {
                     var mObj = moreArr[index] as Map? ?? {};
                     var countBase = mObj["base"] as int? ?? 0;
+                    if (mObj["index"].toString() == "3") {
+                      countBase = unreadNotificationsCount;
+                    }
                     return InkWell(
                       onTap: () async {
                         switch (mObj["index"].toString()) {
@@ -133,7 +169,9 @@ class _MoreViewState extends State<MoreView> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) =>
-                                        const NotificationsView()));
+                                        const NotificationsView())).then((_) {
+                              loadUnreadNotificationsCount();
+                            });
                           case "4":
                             Navigator.push(
                                 context,
@@ -161,6 +199,15 @@ class _MoreViewState extends State<MoreView> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const OrderHistoryView(),
+                              ),
+                            );
+                            break;
+
+                          case "8":
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FavoritesView(),
                               ),
                             );
                             break;

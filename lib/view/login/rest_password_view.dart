@@ -9,7 +9,6 @@ import 'package:food_delivery/database/db_helper.dart';
 import 'package:food_delivery/common/email_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
-import 'new_password_view.dart';
 
 class ResetPasswordView extends StatefulWidget {
   const ResetPasswordView({super.key});
