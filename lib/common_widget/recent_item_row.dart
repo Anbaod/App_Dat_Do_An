@@ -97,7 +97,7 @@ class RecentItemRow extends StatelessWidget {
                       ),
 
                       Text(
-                        "(${ rObj["rating"] } đánh giá)",
+                        "(${ rObj["rating"] ?? "0" } đánh giá)",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             color: TColor.secondaryText, fontSize: 11),

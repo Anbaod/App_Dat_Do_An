@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../database/db_helper.dart';
 import 'change_address_view.dart';
 import 'checkout_message_view.dart';
+import '../../common/cart_counter.dart';
 
 class CheckoutView extends StatefulWidget {
   final List<Map<String, dynamic>> cartItems;
@@ -88,6 +89,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 
     // Clear cart after successful order
     await DBHelper.instance.clearCart();
+    await CartCounter.updateCount();
 
     // Insert Notification
     await DBHelper.instance.insertNotification(

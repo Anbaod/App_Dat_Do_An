@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
 
 import 'my_order_view.dart';
+import '../../common_widget/cart_button.dart';
 
 class AboutUsView extends StatefulWidget {
   const AboutUsView({super.key});
@@ -52,19 +53,7 @@ class _AboutUsViewState extends State<AboutUsView> {
                             fontWeight: FontWeight.w800),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyOrderView()));
-                      },
-                      icon: Image.asset(
-                        "assets/img/shopping_cart.png",
-                        width: 25,
-                        height: 25,
-                      ),
-                    ),
+                    const CartButton(),
                   ],
                 ),
               ),

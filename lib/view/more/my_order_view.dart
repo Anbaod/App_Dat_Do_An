@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common/format_utils.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
+import 'package:food_delivery/common/cart_counter.dart';
 
 import 'package:food_delivery/database/db_helper.dart';
 import 'checkout_view.dart';
@@ -95,31 +96,129 @@ class _MyOrderViewState extends State<MyOrderView> {
                       )),
                   itemBuilder: ((context, index) {
                     var cObj = itemArr[index] as Map? ?? {};
+                    int currentQty = cObj["qty"] ?? 1;
                     return Container(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 15, horizontal: 25),
+                          vertical: 15, horizontal: 15),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Expanded(
-                            child: Text(
-                              "${cObj["name"].toString()} x${cObj["qty"].toString()}",
-                              style: TextStyle(
-                                  color: TColor.primaryText,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.asset(
+                              cObj["image"]?.toString() ?? "assets/img/menu_1.png",
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 50,
+                                  height: 50,
+                                  color: Colors.grey.shade200,
+                                  child: Icon(Icons.fastfood, color: TColor.secondaryText),
+                                );
+                              },
                             ),
                           ),
-                          const SizedBox(
-                            width: 15,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  cObj["name"].toString(),
+                                  style: TextStyle(
+                                      color: TColor.primaryText,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  FormatUtils.formatVND(double.parse(cObj["price"].toString())),
+                                  style: TextStyle(
+                                      color: TColor.primary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
                           ),
-                          Text(
-                            FormatUtils.formatVND(double.parse(cObj["price"].toString())),
-                            style: TextStyle(
-                                color: TColor.primaryText,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700),
-                          )
+                          const SizedBox(width: 12),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GestureDetector(
+                                onTap: currentQty <= 1
+                                    ? null
+                                    : () async {
+                                        int newQty = currentQty - 1;
+                                        await DBHelper.instance.updateCartQty(cObj["id"], newQty);
+                                        await CartCounter.updateCount();
+                                        _loadCart();
+                                      },
+                                child: Container(
+                                  width: 26,
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    color: currentQty <= 1
+                                        ? Colors.grey.shade300
+                                        : TColor.primary,
+                                    borderRadius: BorderRadius.circular(13),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: const Icon(
+                                    Icons.remove,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                currentQty.toString(),
+                                style: TextStyle(
+                                    color: TColor.primaryText,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () async {
+                                  int newQty = currentQty + 1;
+                                  await DBHelper.instance.updateCartQty(cObj["id"], newQty);
+                                  await CartCounter.updateCount();
+                                  _loadCart();
+                                },
+                                child: Container(
+                                  width: 26,
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    color: TColor.primary,
+                                    borderRadius: BorderRadius.circular(13),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: const Icon(
+                                    Icons.add,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 10),
+                          IconButton(
+                            onPressed: () async {
+                              await DBHelper.instance.deleteCartItem(cObj["id"]);
+                              await CartCounter.updateCount();
+                              _loadCart();
+                            },
+                            icon: Icon(
+                              Icons.delete_outline,
+                              color: Colors.red.shade400,
+                              size: 22,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -131,34 +230,6 @@ class _MyOrderViewState extends State<MyOrderView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Ghi chú giao hàng",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700),
-                        ),
-                        TextButton.icon(
-                          onPressed: () {},
-                          icon: Icon(Icons.add, color: TColor.primary),
-                          label: Text(
-                            "Thêm ghi chú",
-                            style: TextStyle(
-                                color: TColor.primary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        )
-                      ],
-                    ),
-                    Divider(
-                      color: TColor.secondaryText.withOpacity(0.5),
-                      height: 1,
-                    ),
                     const SizedBox(
                       height: 15,
                     ),

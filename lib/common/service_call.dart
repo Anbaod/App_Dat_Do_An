@@ -19,9 +19,6 @@ class ServiceCall {
       try {
         var headers = {'Content-Type': 'application/x-www-form-urlencoded'};
 
-        // if(isToken) {
-        //   headers["token"] = "";
-        // }
 
         http
             .post(Uri.parse(path), body: parameter, headers: headers)
