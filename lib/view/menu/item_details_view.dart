@@ -6,6 +6,8 @@ import '../../common/color_extension.dart';
 import '../../common/format_utils.dart';
 import '../../database/db_helper.dart';
 import '../more/my_order_view.dart';
+import '../../common/cart_counter.dart';
+import '../../common_widget/cart_button.dart';
 
 class ItemDetailsView extends StatefulWidget {
   final Map mObj;
@@ -56,6 +58,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
       price: price,
       qty: qty,
     );
+    await CartCounter.updateCount();
     if(mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -577,30 +580,70 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                                 builder: (context) =>
                                                 const MyOrderView(),
                                               ),
-                                            );
+                                            ).then((_) {
+                                              CartCounter.updateCount();
+                                            });
                                           },
-                                          child: Container(
-                                            width: 45,
-                                            height: 45,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                              BorderRadius.circular(22.5),
-                                              boxShadow: const [
-                                                BoxShadow(
-                                                  color: Colors.black12,
-                                                  blurRadius: 4,
-                                                  offset: Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
+                                          child: Stack(
                                             alignment: Alignment.center,
-                                            child: Image.asset(
-                                              "assets/img/shopping_cart.png",
-                                              width: 20,
-                                              height: 20,
-                                              color: TColor.primary,
-                                            ),
+                                            clipBehavior: Clip.none,
+                                            children: [
+                                              Container(
+                                                width: 45,
+                                                height: 45,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                  BorderRadius.circular(22.5),
+                                                  boxShadow: const [
+                                                    BoxShadow(
+                                                      color: Colors.black12,
+                                                      blurRadius: 4,
+                                                      offset: Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Image.asset(
+                                                  "assets/img/shopping_cart.png",
+                                                  width: 20,
+                                                  height: 20,
+                                                  color: TColor.primary,
+                                                ),
+                                              ),
+                                              ValueListenableBuilder<int>(
+                                                valueListenable: CartCounter.count,
+                                                builder: (context, count, child) {
+                                                  if (count <= 0) return const SizedBox();
+                                                  return Positioned(
+                                                    right: -2,
+                                                    top: -2,
+                                                    child: Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.red,
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                      constraints: const BoxConstraints(
+                                                        minWidth: 16,
+                                                        minHeight: 16,
+                                                      ),
+                                                      child: Center(
+                                                        child: Text(
+                                                          count.toString(),
+                                                          style: const TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 9,
+                                                            fontWeight: FontWeight.bold,
+                                                            height: 1.0,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
@@ -666,22 +709,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                         ),
                       ),
 
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const MyOrderView(),
-                            ),
-                          );
-                        },
-                        icon: Image.asset(
-                          "assets/img/shopping_cart.png",
-                          width: 25,
-                          height: 25,
-                          color: TColor.white,
-                        ),
-                      ),
+                      const CartButton(color: Colors.white),
                     ],
                   ),
                 ),

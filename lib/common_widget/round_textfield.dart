@@ -9,6 +9,7 @@ class RoundTextfield extends StatelessWidget {
   final bool obscureText;
   final TextInputType keyboardType;
   final ValueChanged<String>? onChanged;
+  final FocusNode? focusNode;
 
   const RoundTextfield({
     super.key,
@@ -19,6 +20,7 @@ class RoundTextfield extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.onChanged,
+    this.focusNode,
   });
 
   @override
@@ -33,6 +35,7 @@ class RoundTextfield extends StatelessWidget {
         obscureText: obscureText,
         keyboardType: keyboardType,
         onChanged: onChanged,
+        focusNode: focusNode,
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(vertical: 15),
           hintText: hintText,

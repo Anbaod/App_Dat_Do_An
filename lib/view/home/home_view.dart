@@ -6,12 +6,14 @@ import '../../common/globs.dart';
 import '../../common/service_call.dart';
 import '../../common_widget/category_cell.dart';
 import '../../common_widget/most_popular_cell.dart';
-import '../../common_widget/popular_resutaurant_row.dart';
-import '../../common_widget/view_all_title_row.dart';
-import '../more/my_order_view.dart';
 import 'package:food_delivery/database/db_helper.dart';
-import 'package:food_delivery/common/format_utils.dart';
 import 'package:food_delivery/view/menu/menu_items_view.dart';
+
+import '../../common_widget/cart_button.dart';
+import '../../common/cart_counter.dart';
+import '../menu/item_details_view.dart';
+import '../../common_widget/recent_item_row.dart';
+import '../../common_widget/popular_resutaurant_row.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -22,12 +24,14 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   TextEditingController txtSearch = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
 
   List<Map<String, dynamic>> catArr = [];
-  List<Map<String, dynamic>> popArr = [];
   List<Map<String, dynamic>> mostPopArr = [];
   List<Map<String, dynamic>> recentArr = [];
+  List<Map<String, dynamic>> searchArr = [];
   bool isLoading = true;
+  bool isSearching = false;
 
   @override
   void initState() {
@@ -35,11 +39,19 @@ class _HomeViewState extends State<HomeView> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    txtSearch.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
     final categories = await DBHelper.instance.getCategories();
     final db = await DBHelper.instance.database;
     final allFoods = await db.query("foods");
 
+    // Lấy 4 danh mục đầu
     List<Map<String, dynamic>> topCats = [];
     for (int i = 0; i < categories.length && i < 4; i++) {
       topCats.add(categories[i]);
@@ -49,16 +61,31 @@ class _HomeViewState extends State<HomeView> {
     
     setState(() {
       catArr = topCats;
-      popArr = foods.take(3).toList(); // Lấy 3 món
-      mostPopArr = foods.skip(3).take(2).toList();
-      recentArr = foods.skip(1).take(3).toList();
+      mostPopArr = foods.skip(3).take(4).toList(); // Lấy các món phổ biến
+      recentArr = foods.skip(1).take(4).toList(); // Lấy các món ăn gần đây
       isLoading = false;
     });
+  }
+
+  Future<void> _search(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        isSearching = false;
+        searchArr = [];
+      });
+    } else {
+      final results = await DBHelper.instance.searchFoods(query.trim());
+      setState(() {
+        isSearching = true;
+        searchArr = results;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
@@ -79,58 +106,7 @@ class _HomeViewState extends State<HomeView> {
                           fontSize: 20,
                           fontWeight: FontWeight.w800),
                     ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyOrderView()));
-                      },
-                      icon: Image.asset(
-                        "assets/img/shopping_cart.png",
-                        width: 25,
-                        height: 25,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Delivering to",
-                      style:
-                          TextStyle(color: TColor.secondaryText, fontSize: 11),
-                    ),
-                    const SizedBox(
-                      height: 6,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Current Location",
-                          style: TextStyle(
-                              color: TColor.secondaryText,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(
-                          width: 25,
-                        ),
-                        Image.asset(
-                          "assets/img/dropdown.png",
-                          width: 12,
-                          height: 12,
-                        )
-                      ],
-                    )
+                    const CartButton(),
                   ],
                 ),
               ),
@@ -140,8 +116,11 @@ class _HomeViewState extends State<HomeView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: RoundTextfield(
+                  key: const ValueKey("txtHomeSearch"),
                   hintText: "Tìm món ăn",
                   controller: txtSearch,
+                  focusNode: _searchFocus,
+                  onChanged: _search,
                   left: Container(
                     alignment: Alignment.center,
                     width: 30,
@@ -151,95 +130,174 @@ class _HomeViewState extends State<HomeView> {
                       height: 20,
                     ),
                   ),
+                  right: txtSearch.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: () {
+                            txtSearch.clear();
+                            _search("");
+                          },
+                        )
+                      : null,
                 ),
               ),
               const SizedBox(
                 height: 30,
               ),
-              SizedBox(
-                height: 120,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  itemCount: catArr.length,
-                  itemBuilder: ((context, index) {
-                    var cObj = catArr[index] as Map? ?? {};
-                    return CategoryCell(
-                      cObj: cObj,
-                      onTap: () {
-                        Navigator.push(
+
+              if (isSearching) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Kết quả tìm kiếm cho '${txtSearch.text}'",
+                        style: TextStyle(
+                            color: TColor.primaryText,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                searchArr.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
+                          child: Text(
+                            "Không tìm thấy món ăn nào",
+                            style: TextStyle(
+                              color: TColor.secondaryText,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        itemCount: searchArr.length,
+                        itemBuilder: ((context, index) {
+                          var sObj = searchArr[index] as Map? ?? {};
+                          return RecentItemRow(
+                            rObj: sObj,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ItemDetailsView(mObj: sObj),
+                                ),
+                              ).then((_) {
+                                CartCounter.updateCount();
+                              });
+                            },
+                          );
+                        }),
+                      ),
+              ] else ...[
+                SizedBox(
+                  height: 120,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    itemCount: catArr.length,
+                    itemBuilder: ((context, index) {
+                      var cObj = catArr[index] as Map? ?? {};
+                      return CategoryCell(
+                        cObj: cObj,
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => MenuItemsView(
+                                        mObj: {"name": cObj["name"].toString()},
+                                      )));
+                        },
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Được yêu thích nhất",
+                        style: TextStyle(
+                            color: TColor.primaryText,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: 200,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    itemCount: mostPopArr.length,
+                    itemBuilder: ((context, index) {
+                      var mObj = mostPopArr[index] as Map? ?? {};
+                      return MostPopularCell(
+                        mObj: mObj,
+                        onTap: () {
+                          Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => MenuItemsView(
-                                      mObj: {"name": cObj["name"].toString()},
-                                    )));
+                              builder: (context) => ItemDetailsView(mObj: mObj),
+                            ),
+                          ).then((_) {
+                            CartCounter.updateCount();
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Món ăn gần đây",
+                        style: TextStyle(
+                            color: TColor.primaryText,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                ),
+                ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  itemCount: recentArr.length,
+                  itemBuilder: ((context, index) {
+                    var rObj = recentArr[index] as Map? ?? {};
+                    return PopularRestaurantRow(
+                      pObj: rObj,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ItemDetailsView(mObj: rObj),
+                          ),
+                        ).then((_) {
+                          CartCounter.updateCount();
+                        });
                       },
                     );
                   }),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: ViewAllTitleRow(
-                  title: "Nhà hàng phổ biến",
-                  onView: () {},
-                ),
-              ),
-              ListView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: popArr.length,
-                itemBuilder: ((context, index) {
-                  var pObj = popArr[index] as Map? ?? {};
-                  return PopularRestaurantRow(
-                    pObj: pObj,
-                    onTap: () {},
-                  );
-                }),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: ViewAllTitleRow(
-                  title: "Được yêu thích nhất",
-                  onView: () {},
-                ),
-              ),
-              SizedBox(
-                height: 200,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  itemCount: mostPopArr.length,
-                  itemBuilder: ((context, index) {
-                    var mObj = mostPopArr[index] as Map? ?? {};
-                    return MostPopularCell(
-                      mObj: mObj,
-                      onTap: () {},
-                    );
-                  }),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: ViewAllTitleRow(
-                  title: "Món ăn gần đây",
-                  onView: () {},
-                ),
-              ),
-              ListView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                itemCount: recentArr.length,
-                itemBuilder: ((context, index) {
-                  var rObj = recentArr[index] as Map? ?? {};
-                  return PopularRestaurantRow(
-                    pObj: rObj,
-                    onTap: () {},
-                  );
-                }),
-              )
+                )
+              ]
             ],
           ),
         ),

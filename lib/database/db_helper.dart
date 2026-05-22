@@ -1,5 +1,6 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:food_delivery/common/format_utils.dart';
 
 class DBHelper {
   static final DBHelper instance = DBHelper._init();
@@ -583,18 +584,16 @@ class DBHelper {
 
   Future<List<Map<String, dynamic>>> searchFoods(String keyword) async {
     final db = await instance.database;
+    final allFoods = await db.query("foods", orderBy: "id DESC");
 
-    return await db.query(
-      "foods",
-      where: "name LIKE ? OR type LIKE ? OR food_type LIKE ? OR category LIKE ?",
-      whereArgs: [
-        "%\$keyword%",
-        "%\$keyword%",
-        "%\$keyword%",
-        "%\$keyword%",
-      ],
-      orderBy: "id DESC",
-    );
+    final cleanKeyword = FormatUtils.removeDiacritics(keyword.toLowerCase().trim());
+    if (cleanKeyword.isEmpty) return [];
+
+    return List<Map<String, dynamic>>.from(allFoods.where((food) {
+      final name = FormatUtils.removeDiacritics((food["name"] ?? "").toString().toLowerCase());
+      final category = FormatUtils.removeDiacritics((food["category"] ?? "").toString().toLowerCase());
+      return name.contains(cleanKeyword) || category.contains(cleanKeyword);
+    }));
   }
 
 

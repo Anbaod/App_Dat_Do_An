@@ -3,7 +3,8 @@ import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_textfield.dart';
 import 'package:food_delivery/database/db_helper.dart';
 import '../menu/item_details_view.dart';
-import 'my_order_view.dart';
+import '../../common_widget/cart_button.dart';
+import '../../common/format_utils.dart';
 
 class FavoritesView extends StatefulWidget {
   const FavoritesView({super.key});
@@ -49,14 +50,13 @@ class _FavoritesViewState extends State<FavoritesView> {
 
   void searchFavorites(String value) {
     setState(() {
-      if (value.trim().isEmpty) {
+      final cleanQuery = FormatUtils.removeDiacritics(value.toLowerCase().trim());
+      if (cleanQuery.isEmpty) {
         filteredItems = favoriteItems;
       } else {
         filteredItems = favoriteItems.where((item) {
-          return item["name"]
-              .toString()
-              .toLowerCase()
-              .contains(value.toLowerCase());
+          final name = FormatUtils.removeDiacritics(item["name"].toString().toLowerCase());
+          return name.contains(cleanQuery);
         }).toList();
       }
     });
@@ -111,22 +111,8 @@ class _FavoritesViewState extends State<FavoritesView> {
             fontWeight: FontWeight.w800,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const MyOrderView(),
-                ),
-              );
-            },
-            icon: Image.asset(
-              "assets/img/shopping_cart.png",
-              width: 25,
-              height: 25,
-            ),
-          ),
+        actions: const [
+          CartButton(),
         ],
       ),
       body: isLoading

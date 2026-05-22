@@ -4,8 +4,9 @@ import 'package:food_delivery/common_widget/round_textfield.dart';
 
 import '../../common_widget/menu_item_row.dart';
 import '../../database/db_helper.dart';
-import '../more/my_order_view.dart';
 import 'item_details_view.dart';
+import '../../common_widget/cart_button.dart';
+import '../../common/format_utils.dart';
 
 class MenuItemsView extends StatefulWidget {
   final Map mObj;
@@ -22,65 +23,46 @@ class MenuItemsView extends StatefulWidget {
 class _MenuItemsViewState extends State<MenuItemsView> {
   TextEditingController txtSearch = TextEditingController();
 
-  List<Map<String, dynamic>> categoryItems = [];
+  List<Map<String, dynamic>> menuItemsArr = [];
   List<Map<String, dynamic>> filteredItems = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadItems();
   }
 
-  Future<void> _loadData() async {
-    final String category = widget.mObj["name"]?.toString() ?? "Phở";
-    final db = await DBHelper.instance.database;
-    final allFoods = await db.query(
-      "foods",
-      where: "category = ?",
-      whereArgs: [category],
-    );
-
+  Future<void> _loadItems() async {
     setState(() {
-      categoryItems = List<Map<String, dynamic>>.from(allFoods);
-      filteredItems = categoryItems;
+      isLoading = true;
+    });
+    final data = await DBHelper.instance.getFoodsByCategory(widget.mObj["name"].toString());
+    setState(() {
+      menuItemsArr = data;
+      filteredItems = data;
       isLoading = false;
     });
   }
 
-  // Removed old initState
-
-  void searchFood(String value) {
-    setState(() {
-      if (value.trim().isEmpty) {
-        filteredItems = categoryItems;
-        return;
-      }
-
-      final keyword = value.toLowerCase().trim();
-
-      filteredItems = categoryItems.where((item) {
-        final name = item["name"]?.toString().toLowerCase() ?? "";
-        final type = item["type"]?.toString().toLowerCase() ?? "";
-        final foodType = item["food_type"]?.toString().toLowerCase() ?? "";
-
-        return name.contains(keyword) ||
-            type.contains(keyword) ||
-            foodType.contains(keyword);
-      }).toList();
-    });
-  }
-
-  @override
-  void dispose() {
-    txtSearch.dispose();
-    super.dispose();
+  void searchItems(String query) {
+    final cleanQuery = FormatUtils.removeDiacritics(query.toLowerCase().trim());
+    if (cleanQuery.isEmpty) {
+      setState(() {
+        filteredItems = menuItemsArr;
+      });
+    } else {
+      setState(() {
+        filteredItems = menuItemsArr.where((item) {
+          final name = FormatUtils.removeDiacritics(item['name'].toString().toLowerCase());
+          return name.contains(cleanQuery);
+        }).toList();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final String title = widget.mObj["name"]?.toString() ?? "Món ăn";
-
     return Scaffold(
       backgroundColor: TColor.white,
       body: SingleChildScrollView(
@@ -109,7 +91,7 @@ class _MenuItemsViewState extends State<MenuItemsView> {
 
                     Expanded(
                       child: Text(
-                        title,
+                        widget.mObj["name"].toString(),
                         style: TextStyle(
                           color: TColor.primaryText,
                           fontSize: 20,
@@ -118,21 +100,7 @@ class _MenuItemsViewState extends State<MenuItemsView> {
                       ),
                     ),
 
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MyOrderView(),
-                          ),
-                        );
-                      },
-                      icon: Image.asset(
-                        "assets/img/shopping_cart.png",
-                        width: 25,
-                        height: 25,
-                      ),
-                    ),
+                    const CartButton(),
                   ],
                 ),
               ),
@@ -144,7 +112,7 @@ class _MenuItemsViewState extends State<MenuItemsView> {
                 child: RoundTextfield(
                   hintText: "Tìm món ăn",
                   controller: txtSearch,
-                  onChanged: searchFood,
+                  onChanged: searchItems,
                   left: Container(
                     alignment: Alignment.center,
                     width: 30,

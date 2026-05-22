@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../common/color_extension.dart';
 import '../../common_widget/round_textfield.dart';
-import '../more/my_order_view.dart';
 import 'package:food_delivery/database/db_helper.dart';
 import 'menu_items_view.dart';
+import '../../common_widget/cart_button.dart';
+import '../../common/format_utils.dart';
 
 class MenuView extends StatefulWidget {
   const MenuView({super.key});
@@ -50,14 +51,13 @@ class _MenuViewState extends State<MenuView> {
 
   void searchMenu(String value) {
     setState(() {
-      if (value.trim().isEmpty) {
+      final cleanQuery = FormatUtils.removeDiacritics(value.toLowerCase().trim());
+      if (cleanQuery.isEmpty) {
         filteredMenu = menuArr;
       } else {
         filteredMenu = menuArr.where((item) {
-          return item["name"]
-              .toString()
-              .toLowerCase()
-              .contains(value.toLowerCase());
+          final name = FormatUtils.removeDiacritics(item["name"].toString().toLowerCase());
+          return name.contains(cleanQuery);
         }).toList();
       }
     });
@@ -112,21 +112,7 @@ class _MenuViewState extends State<MenuView> {
                           ),
                         ),
 
-                        IconButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const MyOrderView(),
-                              ),
-                            );
-                          },
-                          icon: Image.asset(
-                            "assets/img/shopping_cart.png",
-                            width: 25,
-                            height: 25,
-                          ),
-                        ),
+                        const CartButton(),
                       ],
                     ),
                   ),

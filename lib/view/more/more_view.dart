@@ -4,12 +4,12 @@ import 'package:food_delivery/view/more/inbox_view.dart';
 import 'package:food_delivery/view/more/payment_details_view.dart';
 
 import '../../common/color_extension.dart';
-import 'my_order_view.dart';
 import 'notification_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../login/welcome_view.dart';
 import 'order_history_view.dart';
 import 'my_pending_orders_view.dart';
+import '../../common_widget/cart_button.dart';
 
 class MoreView extends StatefulWidget {
   const MoreView({super.key});
@@ -22,7 +22,7 @@ class _MoreViewState extends State<MoreView> {
   List moreArr = [
     {
       "index": "1",
-      "name": "Chi tiết thanh toán",
+      "name": "Phương thức thanh toán",
       "image": "assets/img/more_payment.png",
       "base": 0
     },
@@ -36,11 +36,11 @@ class _MoreViewState extends State<MoreView> {
       "index": "3",
       "name": "Thông báo",
       "image": "assets/img/more_notification.png",
-      "base": 5
+      "base": 15
     },
     {
       "index": "4",
-      "name": "Hộp thư",
+      "name": "Hộp thư thoại",
       "image": "assets/img/more_inbox.png",
       "base": 0
     },
@@ -52,14 +52,14 @@ class _MoreViewState extends State<MoreView> {
     },
     {
       "index": "6",
-      "name": "Đăng xuất",
-      "image": "assets/img/more_info.png",
+      "name": "Đang xử lý",
+      "image": "assets/img/more_my_order.png",
       "base": 0
     },
     {
       "index": "7",
-      "name": "Lịch sử đơn hàng",
-      "image": "assets/img/more_my_order.png",
+      "name": "Đăng xuất",
+      "icon": Icons.logout,
       "base": 0
     },
   ];
@@ -71,7 +71,6 @@ class _MoreViewState extends State<MoreView> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(
                 height: 46,
@@ -88,19 +87,7 @@ class _MoreViewState extends State<MoreView> {
                           fontSize: 20,
                           fontWeight: FontWeight.w800),
                     ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyOrderView()));
-                      },
-                      icon: Image.asset(
-                        "assets/img/shopping_cart.png",
-                        width: 25,
-                        height: 25,
-                      ),
-                    ),
+                    const CartButton(),
                   ],
                 ),
               ),
@@ -121,14 +108,13 @@ class _MoreViewState extends State<MoreView> {
                                 MaterialPageRoute(
                                     builder: (context) =>
                                         const PaymentDetailsView()));
-
                             break;
 
                           case "2":
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => const MyPendingOrdersView()));
+                                    builder: (context) => const OrderHistoryView()));
                             break;
                           case "3":
                             Navigator.push(
@@ -136,17 +122,26 @@ class _MoreViewState extends State<MoreView> {
                                 MaterialPageRoute(
                                     builder: (context) =>
                                         const NotificationsView()));
+                            break;
                           case "4":
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => const InboxView()));
+                            break;
                           case "5":
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => const AboutUsView()));
+                            break;
                           case "6":
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const MyPendingOrdersView()));
+                            break;
+                          case "7":
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.remove("user_login");
 
@@ -156,14 +151,6 @@ class _MoreViewState extends State<MoreView> {
                                 builder: (context) => const WelcomeView(),
                               ),
                                   (route) => false,
-                            );
-
-                          case "7":
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const OrderHistoryView(),
-                              ),
                             );
                             break;
 
@@ -195,10 +182,16 @@ class _MoreViewState extends State<MoreView> {
                                         borderRadius:
                                             BorderRadius.circular(25)),
                                     alignment: Alignment.center,
-                                    child: Image.asset(mObj["image"].toString(),
-                                        width: 25,
-                                        height: 25,
-                                        fit: BoxFit.contain),
+                                    child: mObj["image"] != null
+                                        ? Image.asset(mObj["image"].toString(),
+                                            width: 25,
+                                            height: 25,
+                                            fit: BoxFit.contain)
+                                        : Icon(
+                                            mObj["icon"] as IconData?,
+                                            color: TColor.primaryText,
+                                            size: 25,
+                                          ),
                                   ),
                                   const SizedBox(
                                     width: 15,

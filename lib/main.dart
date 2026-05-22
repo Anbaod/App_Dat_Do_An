@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/common/locator.dart';
+import 'package:food_delivery/common/cart_counter.dart';
 import 'package:food_delivery/view/login/welcome_view.dart';
 import 'package:food_delivery/view/on_boarding/startup_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,7 @@ void main() async {
   setUpLocator();
 
   prefs = await SharedPreferences.getInstance();
+  await CartCounter.updateCount();
 
   runApp(const MyApp());
 }

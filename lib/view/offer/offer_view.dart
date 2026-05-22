@@ -7,6 +7,8 @@ import '../../database/db_helper.dart';
 import '../../common/globs.dart';
 import '../../common/service_call.dart';
 import '../more/my_order_view.dart';
+import '../../common/cart_counter.dart';
+import '../../common_widget/cart_button.dart';
 
 class OfferView extends StatefulWidget {
   const OfferView({super.key});
@@ -164,6 +166,7 @@ class _OfferViewState extends State<OfferView> {
                     price: finalPrice,
                     qty: 1,
                   );
+                  await CartCounter.updateCount();
 
                   if (mounted) {
                     Navigator.pop(context);
@@ -205,21 +208,7 @@ class _OfferViewState extends State<OfferView> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const MyOrderView(),
-                ),
-              );
-            },
-            icon: Image.asset(
-              "assets/img/shopping_cart.png",
-              width: 25,
-              height: 25,
-            ),
-          ),
+          const CartButton(),
         ],
       ),
 
