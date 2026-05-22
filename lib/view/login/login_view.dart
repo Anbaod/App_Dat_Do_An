@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../common_widget/round_icon_button.dart';
 import '../../common_widget/round_textfield.dart';
 import '../main_tabview/main_tabview.dart';
+import 'package:food_delivery/view/admin/admin_dashboard_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -39,19 +40,32 @@ class _LoginViewState extends State<LoginView> {
       await prefs.setBool("is_login", true);
       await prefs.setString("current_user_name", user['name'] ?? "");
       await prefs.setString("current_user_email", user['email'] ?? "");
+      
+      String role = user['role'] ?? "user";
+      await prefs.setString("current_user_role", role);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Đăng nhập thành công")),
         );
 
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainTabView(),
-          ),
-          (route) => false,
-        );
+        if (role == "admin") {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AdminDashboardView(),
+            ),
+            (route) => false,
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MainTabView(),
+            ),
+            (route) => false,
+          );
+        }
       }
     } else {
       if (mounted) {

@@ -21,7 +21,7 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -165,6 +165,7 @@ class DBHelper {
           phone TEXT,
           address TEXT,
           password TEXT NOT NULL,
+          role TEXT NOT NULL DEFAULT 'user',
           created_at TEXT NOT NULL
         )
       ''');
@@ -192,6 +193,29 @@ class DBHelper {
         );
       } catch (_) {}
     }
+
+    if (oldVersion < 5) {
+      try {
+        await db.execute(
+          "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'",
+        );
+      } catch (_) {}
+      
+      // Tạo tài khoản admin mặc định
+      await db.insert(
+        "users",
+        {
+          "name": "Admin",
+          "email": "admin@gmail.com",
+          "password": "123",
+          "phone": "",
+          "address": "",
+          "role": "admin",
+          "created_at": DateTime.now().toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
   }
 
 
@@ -202,6 +226,7 @@ class DBHelper {
     required String password,
     String phone = "",
     String address = "",
+    String role = "user",
   }) async {
     final db = await instance.database;
 
@@ -213,6 +238,7 @@ class DBHelper {
         "password": password,
         "phone": phone,
         "address": address,
+        "role": role,
         "created_at": DateTime.now().toIso8601String(),
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
