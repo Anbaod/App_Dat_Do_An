@@ -3,6 +3,7 @@ import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 import 'package:food_delivery/view/login/rest_password_view.dart';
 import 'package:food_delivery/view/login/sing_up_view.dart';
+import 'package:food_delivery/database/db_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../common_widget/round_icon_button.dart';
@@ -24,12 +25,6 @@ class _LoginViewState extends State<LoginView> {
     String email = txtEmail.text.trim();
     String password = txtPassword.text.trim();
 
-    final prefs = await SharedPreferences.getInstance();
-
-    String savedName = prefs.getString("user_name") ?? "";
-    String savedEmail = prefs.getString("user_email") ?? "";
-    String savedPassword = prefs.getString("user_password") ?? "";
-
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Vui lòng nhập đầy đủ email và mật khẩu")),
@@ -37,34 +32,33 @@ class _LoginViewState extends State<LoginView> {
       return;
     }
 
-    if (savedEmail.isEmpty || savedPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Chưa có tài khoản. Vui lòng đăng ký trước")),
-      );
-      return;
-    }
+    final user = await DBHelper.instance.getUserByEmailAndPassword(email, password);
 
-    if (email == savedEmail && password == savedPassword) {
+    if (user != null) {
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setBool("is_login", true);
+      await prefs.setString("current_user_name", user['name'] ?? "");
+      await prefs.setString("current_user_email", user['email'] ?? "");
 
-      await prefs.setString("current_user_name", savedName);
-      await prefs.setString("current_user_email", savedEmail);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Đăng nhập thành công")),
+        );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Đăng nhập thành công")),
-      );
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const MainTabView(),
-        ),
-            (route) => false,
-      );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MainTabView(),
+          ),
+          (route) => false,
+        );
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Sai email hoặc mật khẩu")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Sai email hoặc mật khẩu hoặc tài khoản chưa tồn tại")),
+        );
+      }
     }
   }
 
@@ -149,35 +143,6 @@ class _LoginViewState extends State<LoginView> {
               ),
 
               const SizedBox(height: 30),
-
-              Text(
-                "Hoặc đăng nhập bằng",
-                style: TextStyle(
-                  color: TColor.secondaryText,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              RoundIconButton(
-                icon: "assets/img/facebook_logo.png",
-                title: "Đăng nhập bằng Facebook",
-                color: const Color(0xff367FC0),
-                onPressed: () {},
-              ),
-
-              const SizedBox(height: 25),
-
-              RoundIconButton(
-                icon: "assets/img/google_logo.png",
-                title: "Đăng nhập bằng Google",
-                color: const Color(0xffDD4B39),
-                onPressed: () {},
-              ),
-
-              const SizedBox(height: 80),
 
               TextButton(
                 onPressed: () {

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
+import 'package:food_delivery/common/extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
+import 'package:food_delivery/view/login/login_view.dart';
+import '../../common/globs.dart';
 import '../../common_widget/round_textfield.dart';
+import 'package:food_delivery/database/db_helper.dart';
 
 class NewPasswordView extends StatefulWidget {
-  const NewPasswordView({super.key});
+  final Map nObj;
+  const NewPasswordView({super.key, required this.nObj});
 
   @override
   State<NewPasswordView> createState() => _NewPasswordViewState();
@@ -50,22 +55,59 @@ class _NewPasswordViewState extends State<NewPasswordView> {
               RoundTextfield(
                 hintText: "New Password",
                 controller: txtPassword,
+                obscureText: true,
               ),
               const SizedBox(
                 height: 25,
               ),
                RoundTextfield(
                 hintText: "Confirm Password",
-                controller: txtPassword,
+                controller: txtConfirmPassword,
+                obscureText: true,
               ),
               const SizedBox(
                 height: 30,
               ),
-              RoundButton(title: "Next", onPressed: () {}),
+              RoundButton(title: "Next", onPressed: () {
+                btnSubmit();
+              }),
             ],
           ),
         ),
       ),
     );
+  }
+
+   //TODO: Action
+  void btnSubmit() async {
+
+    if(txtPassword.text.length <6) {
+      mdShowAlert(Globs.appName, MSG.enterPassword, () { });
+      return;
+    }
+
+    if (txtPassword.text != txtConfirmPassword.text) {
+      mdShowAlert(Globs.appName, MSG.enterPasswordNotMatch, () {});
+      return;
+    }
+
+    endEditing();
+
+    String email = widget.nObj["email"] ?? "";
+    if (email.isNotEmpty) {
+      Globs.showHUD();
+      await DBHelper.instance.updateUserPassword(email, txtPassword.text);
+      Globs.hideHUD();
+
+      if (mounted) {
+        mdShowAlert(Globs.appName, "Đổi mật khẩu thành công!", () {
+          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginView() ), (route) => false);
+        });
+      }
+    } else {
+      if (mounted) {
+        mdShowAlert(Globs.appName, "Lỗi: Không tìm thấy email", () {});
+      }
+    }
   }
 }
