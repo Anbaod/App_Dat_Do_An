@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../common_widget/popular_resutaurant_row.dart';
 import '../../database/db_helper.dart';
 import '../../common/globs.dart';
@@ -29,8 +29,8 @@ class _OfferViewState extends State<OfferView> {
 
   Future<void> _loadOffers() async {
     final data = await DBHelper.instance.getOffers();
-    String? userIdStr = ServiceCall.userPayload["id"]?.toString();
-    int userId = int.tryParse(userIdStr ?? "0") ?? 0;
+    final prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt("current_user_id") ?? 0;
     
     List<Map<String, dynamic>> availableOffers = [];
     if (userId > 0) {

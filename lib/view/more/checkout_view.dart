@@ -4,7 +4,7 @@ import '../../common/format_utils.dart';
 import '../../common/globs.dart';
 import '../../common/service_call.dart';
 import '../../common_widget/round_button.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../database/db_helper.dart';
 import 'change_address_view.dart';
 import 'checkout_message_view.dart';
@@ -69,15 +69,16 @@ class _CheckoutViewState extends State<CheckoutView> {
       items: widget.cartItems,
     );
     // Save used offers
-    String? userIdStr = ServiceCall.userPayload["id"]?.toString();
-    int userId = int.tryParse(userIdStr ?? "0") ?? 0;
+    final prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt("current_user_id") ?? 0;
+    
     if (userId > 0) {
       final db = await DBHelper.instance.database;
       final allOffers = await db.query("offers");
       for (var cartItem in widget.cartItems) {
         // Find if this item matches any offer name
         for (var offer in allOffers) {
-          if (offer["name"].toString() == cartItem["name"].toString()) {
+          if (cartItem["name"].toString().contains(offer["name"].toString())) {
             // Record this offer as used for the user
             await DBHelper.instance.insertUsedOffer(userId, offer["id"] as int);
           }
@@ -87,6 +88,12 @@ class _CheckoutViewState extends State<CheckoutView> {
 
     // Clear cart after successful order
     await DBHelper.instance.clearCart();
+
+    // Insert Notification
+    await DBHelper.instance.insertNotification(
+      title: "Đơn hàng của bạn đã được nhận",
+      message: "Đơn hàng tới địa chỉ $deliveryAddress đang được xử lý.",
+    );
 
     showModalBottomSheet(
       context: context,

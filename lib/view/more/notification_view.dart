@@ -3,6 +3,9 @@ import 'package:food_delivery/common/color_extension.dart';
 
 import 'my_order_view.dart';
 
+import '../../database/db_helper.dart';
+import 'package:intl/intl.dart';
+
 class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
 
@@ -11,55 +14,51 @@ class NotificationsView extends StatefulWidget {
 }
 
 class _NotificationsViewState extends State<NotificationsView> {
-  List<Map<String, dynamic>> notificationArr = [
-    {
-      "title": "Đơn hàng của bạn đã được nhận",
-      "time": "Vừa xong",
-      "isRead": false,
-      "icon": Icons.receipt_long,
-    },
-    {
-      "title": "Đơn hàng đang được chuẩn bị",
-      "time": "15 phút trước",
-      "isRead": false,
-      "icon": Icons.restaurant,
-    },
-    {
-      "title": "Tài xế đang trên đường giao hàng",
-      "time": "1 giờ trước",
-      "isRead": true,
-      "icon": Icons.delivery_dining,
-    },
-    {
-      "title": "Đơn hàng đã giao thành công",
-      "time": "Hôm qua",
-      "isRead": true,
-      "icon": Icons.check_circle,
-    },
-  ];
+  List<Map<String, dynamic>> notificationArr = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadNotifications();
+  }
+
+  Future<void> loadNotifications() async {
+    final data = await DBHelper.instance.getNotifications();
+    setState(() {
+      notificationArr = List<Map<String, dynamic>>.from(data);
+      isLoading = false;
+    });
+  }
+
+  String formatTime(String isoString) {
+    try {
+      final date = DateTime.parse(isoString);
+      return DateFormat('HH:mm dd/MM/yyyy').format(date);
+    } catch (e) {
+      return isoString;
+    }
+  }
 
   int get unreadCount {
-    return notificationArr.where((item) => item["isRead"] == false).length;
+    return notificationArr.where((item) => item["is_read"] == 0).length;
   }
 
-  void markAsRead(int index) {
-    setState(() {
-      notificationArr[index]["isRead"] = true;
-    });
+  Future<void> markAsRead(int index) async {
+    int id = notificationArr[index]["id"];
+    await DBHelper.instance.markNotificationRead(id);
+    await loadNotifications();
   }
 
-  void markAllRead() {
-    setState(() {
-      for (var item in notificationArr) {
-        item["isRead"] = true;
-      }
-    });
+  Future<void> markAllRead() async {
+    await DBHelper.instance.markAllNotificationsRead();
+    await loadNotifications();
   }
 
-  void deleteNotification(int index) {
-    setState(() {
-      notificationArr.removeAt(index);
-    });
+  Future<void> deleteNotification(int index) async {
+    int id = notificationArr[index]["id"];
+    await DBHelper.instance.deleteNotification(id);
+    await loadNotifications();
   }
 
   @override
@@ -113,7 +112,9 @@ class _NotificationsViewState extends State<NotificationsView> {
         ],
       ),
 
-      body: notificationArr.isEmpty
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : notificationArr.isEmpty
           ? Center(
         child: Text(
           "Không có thông báo nào",
@@ -159,10 +160,10 @@ class _NotificationsViewState extends State<NotificationsView> {
               itemCount: notificationArr.length,
               itemBuilder: (context, index) {
                 final item = notificationArr[index];
-                final bool isRead = item["isRead"];
+                final bool isRead = item["is_read"] == 1;
 
                 return Dismissible(
-                  key: ValueKey(item["title"] + index.toString()),
+                  key: ValueKey(item["id"].toString()),
                   direction: DismissDirection.endToStart,
                   onDismissed: (_) {
                     deleteNotification(index);
@@ -206,7 +207,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                                 backgroundColor:
                                 TColor.primary.withOpacity(0.12),
                                 child: Icon(
-                                  item["icon"],
+                                  Icons.notifications,
                                   color: TColor.primary,
                                 ),
                               ),
@@ -244,7 +245,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  item["time"],
+                                  formatTime(item["created_at"]),
                                   style: TextStyle(
                                     color: TColor.secondaryText,
                                     fontSize: 12,

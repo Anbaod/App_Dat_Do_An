@@ -8,8 +8,8 @@ class DBHelper {
 
   DBHelper._init();
 
-  static const _databaseName = "food_delivery_v4.db";
-  static const _databaseVersion = 1;
+  static const _databaseName = "food_delivery_v5.db";
+  static const _databaseVersion = 5;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -139,6 +139,18 @@ class DBHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         offer_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER NOT NULL,
+        user_email TEXT NOT NULL,
+        rating INTEGER NOT NULL,
+        comment TEXT,
+        is_hidden INTEGER DEFAULT 0,
         created_at TEXT NOT NULL
       )
     ''');
@@ -1022,4 +1034,5 @@ class DBHelper {
     await db.close();
     _database = null;
   }
+
 }

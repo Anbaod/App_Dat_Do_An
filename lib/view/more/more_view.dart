@@ -9,6 +9,7 @@ import 'notification_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../login/welcome_view.dart';
 import 'order_history_view.dart';
+import 'my_pending_orders_view.dart';
 
 class MoreView extends StatefulWidget {
   const MoreView({super.key});
@@ -127,7 +128,8 @@ class _MoreViewState extends State<MoreView> {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => const MyOrderView()));
+                                    builder: (context) => const MyPendingOrdersView()));
+                            break;
                           case "3":
                             Navigator.push(
                                 context,

@@ -66,7 +66,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                     ),
                     Expanded(
                       child: Text(
-                        "Đơn hàng của tôi",
+                        "Giỏ hàng",
                         style: TextStyle(
                             color: TColor.primaryText,
                             fontSize: 20,

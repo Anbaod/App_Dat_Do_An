@@ -37,6 +37,10 @@ class _AdminOrderManagementViewState extends State<AdminOrderManagementView> {
 
   Future<void> _updateStatus(int orderId, String newStatus) async {
     await DBHelper.instance.updateOrderStatus(orderId, newStatus);
+    await DBHelper.instance.insertNotification(
+      title: "Cập nhật trạng thái đơn hàng", 
+      message: "Đơn hàng #$orderId của bạn đã được chuyển thành: $newStatus"
+    );
     _loadOrders();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

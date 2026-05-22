@@ -38,6 +38,7 @@ class _LoginViewState extends State<LoginView> {
     if (user != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool("is_login", true);
+      await prefs.setInt("current_user_id", user['id'] ?? 0);
       await prefs.setString("current_user_name", user['name'] ?? "");
       await prefs.setString("current_user_email", user['email'] ?? "");
       

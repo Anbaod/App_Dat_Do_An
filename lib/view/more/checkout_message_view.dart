@@ -3,7 +3,7 @@ import 'package:food_delivery/common_widget/round_button.dart';
 
 import '../../common/color_extension.dart';
 import '../main_tabview/main_tabview.dart';
-import 'order_history_view.dart';
+import 'my_pending_orders_view.dart';
 
 class CheckoutMessageView extends StatefulWidget {
   const CheckoutMessageView({super.key});
@@ -89,7 +89,7 @@ class _CheckoutMessageViewState extends State<CheckoutMessageView> {
                 );
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const OrderHistoryView()),
+                  MaterialPageRoute(builder: (context) => const MyPendingOrdersView()),
                 );
               }
             ),
