@@ -3,6 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:food_delivery/common_widget/round_icon_button.dart';
 
 import '../../common/color_extension.dart';
+import '../../database/db_helper.dart';
 import '../more/my_order_view.dart';
 
 class ItemDetailsView extends StatefulWidget {
@@ -47,12 +48,20 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
     price = double.tryParse(widget.mObj["price"]?.toString() ?? "15") ?? 15;
   }
 
-  void addToCart() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Đã thêm $qty x $name vào giỏ hàng"),
-      ),
+  void addToCart() async {
+    await DBHelper.instance.insertCart(
+      name: name,
+      image: image,
+      price: price,
+      qty: qty,
     );
+    if(mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Đã thêm $qty x $name vào giỏ hàng"),
+        ),
+      );
+    }
   }
 
   @override
@@ -193,7 +202,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        "\$${price.toStringAsFixed(2)}",
+                                        "${price.toStringAsFixed(0)} VNĐ",
                                         style: TextStyle(
                                           color: TColor.primaryText,
                                           fontSize: 31,
@@ -534,7 +543,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                               const SizedBox(height: 15),
 
                                               Text(
-                                                "\$${(price * qty).toStringAsFixed(2)}",
+                                                "${(price * qty).toStringAsFixed(0)} VNĐ",
                                                 style: TextStyle(
                                                   color: TColor.primaryText,
                                                   fontSize: 21,

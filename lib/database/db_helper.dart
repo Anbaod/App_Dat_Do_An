@@ -8,10 +8,13 @@ class DBHelper {
 
   DBHelper._init();
 
+  static const _databaseName = "food_delivery.db";
+  static const _databaseVersion = 9;
+
   Future<Database> get database async {
     if (_database != null) return _database!;
 
-    _database = await _initDB("food_delivery.db");
+    _database = await _initDB(_databaseName);
     return _database!;
   }
 
@@ -21,7 +24,7 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 8,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -105,6 +108,32 @@ class DBHelper {
         created_at TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        image TEXT,
+        created_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE offers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        image TEXT NOT NULL,
+        discount TEXT NOT NULL,
+        price REAL DEFAULT 0.0,
+        type TEXT,
+        food_type TEXT,
+        rate TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await _seedCategories(db);
+    await _seedFoods(db);
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -216,6 +245,128 @@ class DBHelper {
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
     }
+
+    if (oldVersion < 6) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            user_email TEXT NOT NULL,
+            rating INTEGER NOT NULL,
+            comment TEXT,
+            is_hidden INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+          )
+        ''');
+        await db.execute(
+          "ALTER TABLE orders ADD COLUMN is_reviewed INTEGER NOT NULL DEFAULT 0",
+        );
+      } catch (_) {}
+    }
+
+    if (oldVersion < 7) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            image TEXT,
+            created_at TEXT
+          )
+        ''');
+        await _seedCategories(db);
+        await _seedFoods(db);
+      } catch (_) {}
+    }
+
+    if (oldVersion < 8) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS offers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            image TEXT NOT NULL,
+            discount TEXT NOT NULL,
+            price REAL DEFAULT 0.0,
+            type TEXT,
+            food_type TEXT,
+            rate TEXT,
+            created_at TEXT NOT NULL
+          )
+        ''');
+      } catch (_) {}
+    }
+
+    if (oldVersion < 9) {
+      try {
+        await db.execute("ALTER TABLE offers ADD COLUMN price REAL DEFAULT 0.0");
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _seedCategories(Database db) async {
+    final categories = [
+      {"name": "Food", "image": "assets/img/cat_1.png"},
+      {"name": "Beverages", "image": "assets/img/cat_2.png"},
+      {"name": "Desserts", "image": "assets/img/cat_3.png"},
+      {"name": "Promotions", "image": "assets/img/cat_4.png"},
+    ];
+    for (var cat in categories) {
+      await db.insert("categories", {
+        "name": cat["name"],
+        "image": cat["image"],
+        "created_at": DateTime.now().toIso8601String(),
+      });
+    }
+  }
+
+  Future<void> _seedFoods(Database db) async {
+    final foods = [
+      {
+        "name": "Beef Burger",
+        "image": "assets/img/item_1.png",
+        "price": 16.0,
+        "rate": "4.9",
+        "category": "Food",
+        "description": "Beef Burger with cheese and bacon",
+        "food_type": "Fast Food",
+        "type": "Food"
+      },
+      {
+        "name": "Classic Burger",
+        "image": "assets/img/item_2.png",
+        "price": 14.0,
+        "rate": "4.5",
+        "category": "Food",
+        "description": "Classic beef burger",
+        "food_type": "Fast Food",
+        "type": "Food"
+      },
+      {
+        "name": "Coffee",
+        "image": "assets/img/cat_2.png",
+        "price": 5.0,
+        "rate": "4.8",
+        "category": "Beverages",
+        "description": "Hot black coffee",
+        "food_type": "Drinks",
+        "type": "Drink"
+      },
+      {
+        "name": "Cheese Cake",
+        "image": "assets/img/cat_3.png",
+        "price": 8.0,
+        "rate": "4.7",
+        "category": "Desserts",
+        "description": "Sweet cheese cake",
+        "food_type": "Dessert",
+        "type": "Dessert"
+      },
+    ];
+    for (var food in foods) {
+      await db.insert("foods", food);
+    }
   }
 
 
@@ -291,65 +442,6 @@ class DBHelper {
     );
   }
 
-  Future<int> updateUser({
-    required int id,
-    required String name,
-    required String email,
-    String phone = "",
-    String address = "",
-  }) async {
-    final db = await instance.database;
-
-    return await db.update(
-      "users",
-      {
-        "name": name,
-        "email": email,
-        "phone": phone,
-        "address": address,
-      },
-      where: "id = ?",
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> deleteUser(int id) async {
-    final db = await instance.database;
-
-    return await db.delete(
-      "users",
-      where: "id = ?",
-      whereArgs: [id],
-    );
-  }
-
-
-  Future<int> insertFood({
-    required String name,
-    required String image,
-    required double price,
-    String rate = "4.5",
-    String rating = "0",
-    String type = "Food",
-    String foodType = "Fast Food",
-    String category = "Food",
-    String description = "",
-  }) async {
-    final db = await instance.database;
-
-    return await db.insert("foods", {
-      "name": name,
-      "image": image,
-      "price": price,
-      "rate": rate,
-      "rating": rating,
-      "type": type,
-      "food_type": foodType,
-      "category": category,
-      "description": description,
-    });
-  }
-
   Future<List<Map<String, dynamic>>> getFoods() async {
     final db = await instance.database;
 
@@ -377,56 +469,16 @@ class DBHelper {
       "foods",
       where: "name LIKE ? OR type LIKE ? OR food_type LIKE ? OR category LIKE ?",
       whereArgs: [
-        "%$keyword%",
-        "%$keyword%",
-        "%$keyword%",
-        "%$keyword%",
+        "%\$keyword%",
+        "%\$keyword%",
+        "%\$keyword%",
+        "%\$keyword%",
       ],
       orderBy: "id DESC",
     );
   }
 
-  Future<int> updateFood({
-    required int id,
-    required String name,
-    required String image,
-    required double price,
-    String rate = "4.5",
-    String rating = "0",
-    String type = "Food",
-    String foodType = "Fast Food",
-    String category = "Food",
-    String description = "",
-  }) async {
-    final db = await instance.database;
 
-    return await db.update(
-      "foods",
-      {
-        "name": name,
-        "image": image,
-        "price": price,
-        "rate": rate,
-        "rating": rating,
-        "type": type,
-        "food_type": foodType,
-        "category": category,
-        "description": description,
-      },
-      where: "id = ?",
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> deleteFood(int id) async {
-    final db = await instance.database;
-
-    return await db.delete(
-      "foods",
-      where: "id = ?",
-      whereArgs: [id],
-    );
-  }
 
 
 
@@ -713,7 +765,124 @@ class DBHelper {
     );
   }
 
+  // --- Admin User Management ---
+  Future<int> updateUser(int id, {required String name, required String phone, required String address, required String role}) async {
+    final db = await instance.database;
+    return await db.update(
+      "users",
+      {
+        "name": name,
+        "phone": phone,
+        "address": address,
+        "role": role,
+      },
+      where: "id = ?",
+      whereArgs: [id],
+    );
+  }
 
+  Future<int> deleteUser(int id) async {
+    final db = await instance.database;
+    return await db.delete("users", where: "id = ?", whereArgs: [id]);
+  }
+
+  // --- Admin Food Management ---
+  Future<int> insertFood(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.insert("foods", data);
+  }
+
+  Future<int> updateFood(int id, Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.update("foods", data, where: "id = ?", whereArgs: [id]);
+  }
+
+  Future<int> deleteFood(int id) async {
+    final db = await instance.database;
+    return await db.delete("foods", where: "id = ?", whereArgs: [id]);
+  }
+
+  // --- Admin Stats (Orders) ---
+  Future<List<Map<String, dynamic>>> getCompletedOrders() async {
+    final db = await instance.database;
+    return await db.query("orders", where: "status = ?", whereArgs: ["Thành công"]);
+  }
+  
+  Future<List<Map<String, dynamic>>> getAllOrders() async {
+    final db = await instance.database;
+    return await db.query("orders", orderBy: "id DESC");
+  }
+
+  // --- Reviews Management ---
+  Future<int> insertReview({required int orderId, required String userEmail, required int rating, required String comment}) async {
+    final db = await instance.database;
+    return await db.insert("reviews", {
+      "order_id": orderId,
+      "user_email": userEmail,
+      "rating": rating,
+      "comment": comment,
+      "is_hidden": 0,
+      "created_at": DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getAllReviews() async {
+    final db = await instance.database;
+    return await db.query("reviews", orderBy: "id DESC");
+  }
+
+  Future<int> updateReviewVisibility(int id, int isHidden) async {
+    final db = await instance.database;
+    return await db.update("reviews", {"is_hidden": isHidden}, where: "id = ?", whereArgs: [id]);
+  }
+
+  Future<int> deleteReview(int id) async {
+    final db = await instance.database;
+    return await db.delete("reviews", where: "id = ?", whereArgs: [id]);
+  }
+
+  Future<int> updateOrderReviewStatus(int orderId, int isReviewed) async {
+    final db = await instance.database;
+    return await db.update("orders", {"is_reviewed": isReviewed}, where: "id = ?", whereArgs: [orderId]);
+  }
+
+  // --- Category Management ---
+  Future<int> insertCategory(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    if (!data.containsKey('created_at')) {
+      data['created_at'] = DateTime.now().toIso8601String();
+    }
+    return await db.insert("categories", data);
+  }
+
+  Future<List<Map<String, dynamic>>> getCategories() async {
+    final db = await instance.database;
+    return await db.query("categories", orderBy: "id DESC");
+  }
+
+  Future<int> deleteCategory(int id) async {
+    final db = await instance.database;
+    return await db.delete("categories", where: "id = ?", whereArgs: [id]);
+  }
+
+  // --- Offer Management ---
+  Future<int> insertOffer(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    if (!data.containsKey('created_at')) {
+      data['created_at'] = DateTime.now().toIso8601String();
+    }
+    return await db.insert("offers", data);
+  }
+
+  Future<List<Map<String, dynamic>>> getOffers() async {
+    final db = await instance.database;
+    return await db.query("offers", orderBy: "id DESC");
+  }
+
+  Future<int> deleteOffer(int id) async {
+    final db = await instance.database;
+    return await db.delete("offers", where: "id = ?", whereArgs: [id]);
+  }
 
   Future<void> close() async {
     final db = await instance.database;

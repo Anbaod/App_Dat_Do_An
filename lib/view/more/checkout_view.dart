@@ -7,7 +7,10 @@ import 'change_address_view.dart';
 import 'checkout_message_view.dart';
 
 class CheckoutView extends StatefulWidget {
-  const CheckoutView({super.key});
+  final List<Map<String, dynamic>> cartItems;
+  final double subTotal;
+
+  const CheckoutView({super.key, required this.cartItems, required this.subTotal});
 
   @override
   State<CheckoutView> createState() => _CheckoutViewState();
@@ -24,9 +27,10 @@ class _CheckoutViewState extends State<CheckoutView> {
 
   String deliveryAddress = "Thủ Dầu Một\nBình Dương, Việt Nam";
 
-  double subTotal = 68;
   double deliveryCost = 2;
   double discount = 4;
+
+  double get subTotal => widget.subTotal;
 
   double get total => subTotal + deliveryCost - discount;
 
@@ -55,11 +59,15 @@ class _CheckoutViewState extends State<CheckoutView> {
       return;
     }
 
-    await DBHelper.instance.insertOrder(
+    await DBHelper.instance.insertOrderWithItems(
       address: deliveryAddress,
       paymentMethod: paymentArr[selectMethod]["name"],
       total: total,
+      items: widget.cartItems,
     );
+    
+    // Clear cart after successful order
+    await DBHelper.instance.clearCart();
 
     showModalBottomSheet(
       context: context,
@@ -267,14 +275,14 @@ class _CheckoutViewState extends State<CheckoutView> {
                   children: [
                     const SizedBox(height: 15),
 
-                    _buildPriceRow("Tạm tính", "\$${subTotal.toStringAsFixed(0)}"),
+                    _buildPriceRow("Tạm tính", "${subTotal.toStringAsFixed(0)} VNĐ"),
                     const SizedBox(height: 8),
 
                     _buildPriceRow(
-                        "Phí giao hàng", "\$${deliveryCost.toStringAsFixed(0)}"),
+                        "Phí giao hàng", "${deliveryCost.toStringAsFixed(0)} VNĐ"),
                     const SizedBox(height: 8),
 
-                    _buildPriceRow("Giảm giá", "-\$${discount.toStringAsFixed(0)}"),
+                    _buildPriceRow("Giảm giá", "-${discount.toStringAsFixed(0)} VNĐ"),
                     const SizedBox(height: 15),
 
                     Divider(
@@ -286,7 +294,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 
                     _buildPriceRow(
                       "Tổng cộng",
-                      "\$${total.toStringAsFixed(0)}",
+                      "${total.toStringAsFixed(0)} VNĐ",
                       isTotal: true,
                     ),
                   ],

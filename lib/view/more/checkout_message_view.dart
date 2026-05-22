@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 
 import '../../common/color_extension.dart';
+import '../main_tabview/main_tabview.dart';
+import 'order_history_view.dart';
 
 class CheckoutMessageView extends StatefulWidget {
   const CheckoutMessageView({super.key});
@@ -77,9 +79,28 @@ class _CheckoutMessageViewState extends State<CheckoutMessageView> {
             const SizedBox(
               height: 35,
             ),
-            RoundButton(title: "Track My Order", onPressed: () {}),
+            RoundButton(
+              title: "Track My Order", 
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MainTabView()),
+                  (route) => false,
+                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const OrderHistoryView()),
+                );
+              }
+            ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MainTabView()),
+                  (route) => false,
+                );
+              },
               child: Text(
                 "Back To Home",
                 textAlign: TextAlign.center,

@@ -3,6 +3,7 @@ import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 
 import '../../common_widget/popular_resutaurant_row.dart';
+import '../../database/db_helper.dart';
 import '../more/my_order_view.dart';
 
 class OfferView extends StatefulWidget {
@@ -15,162 +16,21 @@ class OfferView extends StatefulWidget {
 class _OfferViewState extends State<OfferView> {
   TextEditingController txtSearch = TextEditingController();
 
-  List<Map<String, dynamic>> offerArr = [
-    {
-      "image": "assets/img/offer_1.png",
-      "name": "Café de Noires",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafe",
-      "food_type": "Western Food",
-      "discount": "Giảm 20%",
-    },
-    {
-      "image": "assets/img/offer_2.png",
-      "name": "Isso",
-      "rate": "4.8",
-      "rating": "98",
-      "type": "Cafe",
-      "food_type": "Fast Food",
-      "discount": "Mua 1 tặng 1",
-    },
-    {
-      "image": "assets/img/offer_3.png",
-      "name": "Cafe Beans",
-      "rate": "4.7",
-      "rating": "86",
-      "type": "Cafe",
-      "food_type": "Coffee",
-      "discount": "Freeship",
-    },
-    {
-      "name": "Beef Burger",
-      "image": "assets/img/menu_1.png",
-      "price": 16.0,
-      "rate": "4.9",
-      "rating": "120",
-      "type": "Burger",
-      "food_type": "Fast Food",
-      "discount": "Giảm 15%",
-    },
-    {
-      "name": "Classic Burger",
-      "image": "assets/img/menu_2.png",
-      "price": 14.0,
-      "rate": "4.8",
-      "rating": "95",
-      "type": "Burger",
-      "food_type": "Fast Food",
-      "discount": "Freeship",
-    },
-    {
-      "name": "Cheese Chicken Burger",
-      "image": "assets/img/menu_3.png",
-      "price": 17.0,
-      "rate": "4.7",
-      "rating": "88",
-      "type": "Burger",
-      "food_type": "Fast Food",
-      "discount": "Giảm 10%",
-    },
-    {
-      "name": "Chicken Legs Basket",
-      "image": "assets/img/menu_1.png",
-      "price": 15.0,
-      "rate": "4.6",
-      "rating": "76",
-      "type": "Chicken",
-      "food_type": "Fried Food",
-      "discount": "Giảm 12%",
-    },
-    {
-      "name": "French Fries Large",
-      "image": "assets/img/menu_2.png",
-      "price": 6.0,
-      "rate": "4.5",
-      "rating": "64",
-      "type": "Snack",
-      "food_type": "Fast Food",
-      "discount": "Giảm 5%",
-    },
-    {
-      "name": "Pizza Hải Sản",
-      "image": "assets/img/menu_3.png",
-      "price": 22.0,
-      "rate": "4.8",
-      "rating": "140",
-      "type": "Pizza",
-      "food_type": "Italian Food",
-      "discount": "Mua 1 tặng 1",
-    },
-    {
-      "name": "Mì Ý Bò Bằm",
-      "image": "assets/img/menu_1.png",
-      "price": 18.0,
-      "rate": "4.7",
-      "rating": "102",
-      "type": "Pasta",
-      "food_type": "Western Food",
-      "discount": "Giảm 18%",
-    },
-    {
-      "name": "Gà Rán Giòn Cay",
-      "image": "assets/img/menu_2.png",
-      "price": 13.0,
-      "rate": "4.6",
-      "rating": "89",
-      "type": "Chicken",
-      "food_type": "Fast Food",
-      "discount": "Freeship",
-    },
-    {
-      "name": "Trà Sữa Trân Châu",
-      "image": "assets/img/menu_3.png",
-      "price": 5.0,
-      "rate": "4.9",
-      "rating": "210",
-      "type": "Drink",
-      "food_type": "Beverage",
-      "discount": "Giảm 20%",
-    },
-    {
-      "name": "Cà Phê Sữa Đá",
-      "image": "assets/img/menu_1.png",
-      "price": 4.0,
-      "rate": "4.8",
-      "rating": "180",
-      "type": "Drink",
-      "food_type": "Coffee",
-      "discount": "Giảm 10%",
-    },
-    {
-      "name": "Bánh Mì Thịt Nướng",
-      "image": "assets/img/menu_2.png",
-      "price": 7.0,
-      "rate": "4.7",
-      "rating": "130",
-      "type": "Vietnamese Food",
-      "food_type": "Street Food",
-      "discount": "Freeship",
-    },
-    {
-      "name": "Cơm Gà Xối Mỡ",
-      "image": "assets/img/menu_3.png",
-      "price": 12.0,
-      "rate": "4.6",
-      "rating": "118",
-      "type": "Rice",
-      "food_type": "Vietnamese Food",
-      "discount": "Giảm 15%",
-    },
-  ];
-
+  List<Map<String, dynamic>> offerArr = [];
   List<Map<String, dynamic>> filteredOffers = [];
 
   @override
   void initState() {
     super.initState();
-    filteredOffers = offerArr;
+    _loadOffers();
+  }
+
+  Future<void> _loadOffers() async {
+    final data = await DBHelper.instance.getOffers();
+    setState(() {
+      offerArr = data;
+      filteredOffers = data;
+    });
   }
 
   void searchOffer(String value) {
@@ -265,13 +125,35 @@ class _OfferViewState extends State<OfferView> {
 
               RoundButton(
                 title: "Dùng ưu đãi",
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Đã chọn ưu đãi: $discount"),
-                    ),
+                onPressed: () async {
+                  double originalPrice = double.tryParse(item["price"]?.toString() ?? "0") ?? 0.0;
+                  double finalPrice = originalPrice;
+                  
+                  if (discount.contains("10%")) {
+                    finalPrice = originalPrice * 0.9;
+                  } else if (discount.contains("20%")) {
+                    finalPrice = originalPrice * 0.8;
+                  } else if (discount.contains("30%")) {
+                    finalPrice = originalPrice * 0.7;
+                  } else if (discount.contains("50%")) {
+                    finalPrice = originalPrice * 0.5;
+                  }
+
+                  await DBHelper.instance.insertCart(
+                    name: "$name ($discount)",
+                    image: image,
+                    price: finalPrice,
+                    qty: 1,
                   );
+
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Đã thêm $name vào giỏ hàng với giá ${finalPrice.toStringAsFixed(0)} VNĐ"),
+                      ),
+                    );
+                  }
                 },
               ),
             ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
-
+import 'package:food_delivery/view/more/review_order_view.dart';
 import '../../database/db_helper.dart';
 
 class OrderHistoryView extends StatefulWidget {
@@ -119,7 +119,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                 const SizedBox(height: 6),
 
                 Text(
-                  "Tổng tiền: \$${order["total"]}",
+                  "Tổng tiền: ${order["total"]} VNĐ",
                   style: TextStyle(
                     color: TColor.primary,
                     fontSize: 15,
@@ -137,23 +137,60 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                   ),
                 ),
 
+                const SizedBox(height: 6),
+
+                Text(
+                  "Trạng thái: ${order["status"]}",
+                  style: TextStyle(
+                    color: order["status"] == "Thành công" ? Colors.green : Colors.orange,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
                 const SizedBox(height: 10),
 
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () {
-                      deleteOrder(order["id"]);
-                    },
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.red,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (order["status"] == "Thành công" && order["is_reviewed"] == 0)
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ReviewOrderView(orderId: order["id"]),
+                            ),
+                          );
+                          loadOrders();
+                        },
+                        icon: const Icon(Icons.star, color: Colors.white, size: 18),
+                        label: const Text("Đánh giá"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    if (order["status"] == "Thành công" && order["is_reviewed"] == 1)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 10),
+                        child: Text("Đã đánh giá", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                      ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () {
+                        deleteOrder(order["id"]);
+                      },
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                      ),
+                      label: const Text(
+                        "Xóa",
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ),
-                    label: const Text(
-                      "Xóa",
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
+                  ],
                 ),
               ],
             ),

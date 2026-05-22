@@ -49,6 +49,16 @@ class _SignUpViewState extends State<SignUpView> {
     }
 
     try {
+      final existingUser = await DBHelper.instance.getUserByEmail(email);
+      if (existingUser != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Email này đã được sử dụng")),
+          );
+        }
+        return;
+      }
+
       await DBHelper.instance.insertUser(
         name: name,
         email: email,
