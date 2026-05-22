@@ -19,7 +19,11 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
   GoogleMapController? _controller;
 
   LatLng selectedLocation = const LatLng(11.3254, 106.4770);
+
   final TextEditingController txtAddress = TextEditingController();
+  final TextEditingController txtNote = TextEditingController();
+
+  String selectedAddress = "Đang lấy địa chỉ...";
 
   late List<MarkerData> _customMarkers;
 
@@ -28,9 +32,7 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
   @override
   void initState() {
     super.initState();
-
     _updateMarker();
-
     _getAddressFromLatLng(selectedLocation);
   }
 
@@ -53,7 +55,7 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
         children: [
           Image.asset(
             'assets/img/map_pin.png',
-            width: 35,
+            width: 38,
             fit: BoxFit.contain,
           ),
         ],
@@ -66,9 +68,7 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
 
     if (address.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Vui lòng nhập địa chỉ"),
-        ),
+        const SnackBar(content: Text("Vui lòng nhập địa chỉ")),
       );
       return;
     }
@@ -84,9 +84,7 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
 
       if (locations.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Không tìm thấy địa chỉ"),
-          ),
+          const SnackBar(content: Text("Không tìm thấy địa chỉ")),
         );
         return;
       }
@@ -100,7 +98,6 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
 
       setState(() {
         selectedLocation = newPosition;
-
         _updateMarker();
       });
 
@@ -112,12 +109,12 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
           ),
         ),
       );
+
+      await _getAddressFromLatLng(newPosition);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            "Không tìm thấy địa chỉ, hãy nhập cụ thể hơn",
-          ),
+          content: Text("Không tìm thấy địa chỉ, hãy nhập cụ thể hơn"),
         ),
       );
     } finally {
@@ -126,6 +123,7 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
       });
     }
   }
+
   Future<void> _getAddressFromLatLng(LatLng position) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -136,17 +134,24 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
 
-        String address =
-            "${place.street}, ${place.subLocality}, ${place.locality}";
+        String address = [
+          place.street,
+          place.subLocality,
+          place.locality,
+          place.administrativeArea,
+          place.country,
+        ].where((e) => e != null && e.toString().trim().isNotEmpty).join(", ");
 
         setState(() {
+          selectedAddress = address;
           txtAddress.text = address;
         });
       }
     } catch (e) {
       setState(() {
-        txtAddress.text =
+        selectedAddress =
         "Lat: ${position.latitude.toStringAsFixed(5)}, Lng: ${position.longitude.toStringAsFixed(5)}";
+        txtAddress.text = selectedAddress;
       });
     }
   }
@@ -170,17 +175,18 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
     FocusScope.of(context).unfocus();
 
     Navigator.pop(context, {
-      "address": txtAddress.text,
+      "address": selectedAddress,
       "latitude": selectedLocation.latitude,
       "longitude": selectedLocation.longitude,
+      "note": txtNote.text.trim(),
     });
   }
 
   @override
   void dispose() {
     txtAddress.dispose();
+    txtNote.dispose();
     _controller?.dispose();
-
     super.dispose();
   }
 
@@ -193,10 +199,8 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-
       appBar: AppBar(
         backgroundColor: TColor.white,
-
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
@@ -207,11 +211,9 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
             height: 20,
           ),
         ),
-
         centerTitle: false,
-
         title: Text(
-          "Thay đổi địa chỉ",
+          "Chọn địa điểm giao hàng",
           style: TextStyle(
             color: TColor.primaryText,
             fontSize: 20,
@@ -219,47 +221,28 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
           ),
         ),
       ),
-
       body: Stack(
         children: [
-
           CustomGoogleMapMarkerBuilder(
             customMarkers: _customMarkers,
             builder: (BuildContext context, Set<Marker>? markers) {
-
               if (markers == null) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
+                return const Center(child: CircularProgressIndicator());
               }
 
               return GoogleMap(
                 mapType: MapType.normal,
-
                 initialCameraPosition: initialCamera,
-
                 compassEnabled: false,
-
                 myLocationButtonEnabled: false,
-
                 zoomControlsEnabled: false,
-
                 markers: markers,
-
                 onTap: _onMapTap,
-
                 gestureRecognizers: {
-                  Factory<PanGestureRecognizer>(
-                        () => PanGestureRecognizer(),
-                  ),
-                  Factory<ScaleGestureRecognizer>(
-                        () => ScaleGestureRecognizer(),
-                  ),
-                  Factory<TapGestureRecognizer>(
-                        () => TapGestureRecognizer(),
-                  ),
+                  Factory<PanGestureRecognizer>(() => PanGestureRecognizer()),
+                  Factory<ScaleGestureRecognizer>(() => ScaleGestureRecognizer()),
+                  Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
                 },
-
                 onMapCreated: (GoogleMapController controller) {
                   _controller = controller;
                 },
@@ -271,52 +254,37 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
             top: 15,
             left: 16,
             right: 16,
-
             child: SafeArea(
               child: Material(
                 elevation: 5,
-
                 borderRadius: BorderRadius.circular(12),
-
                 child: Container(
                   height: 55,
-
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-
                   decoration: BoxDecoration(
                     color: TColor.white,
-
                     borderRadius: BorderRadius.circular(12),
                   ),
-
                   child: TextField(
                     controller: txtAddress,
-
                     textInputAction: TextInputAction.search,
-
                     onSubmitted: (_) {
                       _searchAddress();
                     },
-
                     decoration: InputDecoration(
                       hintText: "Tìm thành phố hoặc địa chỉ",
-
                       border: InputBorder.none,
-
                       prefixIcon: Icon(
                         Icons.search,
                         color: TColor.primaryText,
                       ),
-
                       suffixIcon: isSearching
                           ? const Padding(
                         padding: EdgeInsets.all(14),
                         child: SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       )
                           : IconButton(
@@ -332,20 +300,89 @@ class _ChangeAddressViewState extends State<ChangeAddressView> {
               ),
             ),
           ),
-        ],
-      ),
 
-      bottomNavigationBar: Container(
-        color: TColor.white,
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 15,
+            child: Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: TColor.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        color: TColor.primary,
+                        size: 26,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Địa chỉ đã chọn",
+                              style: TextStyle(
+                                color: TColor.secondaryText,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              selectedAddress,
+                              style: TextStyle(
+                                color: TColor.primaryText,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
 
-        padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
+                  const SizedBox(height: 12),
 
-        child: SafeArea(
-          child: RoundButton(
-            title: "Xác nhận địa chỉ",
-            onPressed: _confirmAddress,
+                  TextField(
+                    controller: txtNote,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText: "Ghi chú cho shipper, ví dụ: Gọi trước khi giao",
+                      filled: true,
+                      fillColor: TColor.textfield,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  RoundButton(
+                    title: "Xác nhận địa chỉ",
+                    onPressed: _confirmAddress,
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
