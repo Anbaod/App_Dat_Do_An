@@ -6,7 +6,9 @@ import 'package:food_delivery/view/login/new_password_view.dart';
 import 'package:otp_pin_field/otp_pin_field.dart';
 
 import '../../common/globs.dart';
-import '../../common/service_call.dart';
+import 'package:food_delivery/common/email_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math';
 
 class OTPView extends StatefulWidget {
   final String email;
@@ -139,7 +141,7 @@ class _OTPViewState extends State<OTPView> {
                   }),
                 TextButton(
                 onPressed: () {
-                   serviceCallForgotRequest({"email": widget.email});
+                   resendOTP();
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -169,7 +171,7 @@ class _OTPViewState extends State<OTPView> {
   }
 
    //TODO: Action
-  void btnSubmit() {
+  void btnSubmit() async {
     if (code.length != 6) {
       mdShowAlert(Globs.appName, MSG.enterCode, () {});
       return;
@@ -177,50 +179,41 @@ class _OTPViewState extends State<OTPView> {
 
     endEditing();
 
-    serviceCallForgotVerify({"email": widget.email, "reset_code": code});
-  }
+    final prefs = await SharedPreferences.getInstance();
+    final savedOtp = prefs.getString("reset_otp") ?? "123456";
 
-  //TODO: ServiceCall
-
-  void serviceCallForgotVerify(Map<String, dynamic> parameter) {
-    Globs.showHUD();
-
-    ServiceCall.post(parameter, SVKey.svForgotPasswordVerify,
-        withSuccess: (responseObj) async {
-      Globs.hideHUD();
-      if (responseObj[KKey.status] == "1") {
-        var payloadObj = responseObj[KKey.payload] as Map? ?? {};
+    if (code == savedOtp) {
+      if (mounted) {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => NewPasswordView(nObj: payloadObj,)));
-      } else {
-        mdShowAlert(Globs.appName,
-            responseObj[KKey.message] as String? ?? MSG.fail, () {});
+                builder: (context) => NewPasswordView(nObj: {"email": widget.email})));
       }
-    }, failure: (err) async {
-      Globs.hideHUD();
-      mdShowAlert(Globs.appName, err.toString(), () {});
-    });
+    } else {
+      if (mounted) {
+        mdShowAlert(Globs.appName, "Mã OTP không hợp lệ", () {});
+      }
+    }
   }
 
-  void serviceCallForgotRequest(Map<String, dynamic> parameter) {
-    Globs.showHUD();
+  void resendOTP() async {
+    final otpCode = (100000 + Random().nextInt(900000)).toString();
 
-    ServiceCall.post(parameter, SVKey.svForgotPasswordRequest,
-        withSuccess: (responseObj) async {
-      Globs.hideHUD();
-      if (responseObj[KKey.status] == "1") {
-         mdShowAlert(Globs.appName,
-            "reset code successfully", () {});
-       
-      } else {
-        mdShowAlert(Globs.appName,
-            responseObj[KKey.message] as String? ?? MSG.fail, () {});
+    Globs.showHUD();
+    bool isSent = await EmailHelper.sendResetPasswordEmail(widget.email, otpCode);
+    Globs.hideHUD();
+
+    if (isSent) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString("reset_otp", otpCode);
+
+      if (mounted) {
+        mdShowAlert(Globs.appName, "Mã OTP đã được gửi lại vào email của bạn", () {});
       }
-    }, failure: (err) async {
-      Globs.hideHUD();
-      mdShowAlert(Globs.appName, err.toString(), () {});
-    });
+    } else {
+      if (mounted) {
+        mdShowAlert(Globs.appName, "Có lỗi xảy ra khi gửi email", () {});
+      }
+    }
   }
 }

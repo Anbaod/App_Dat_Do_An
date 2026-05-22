@@ -21,7 +21,7 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -35,6 +35,7 @@ class DBHelper {
         email TEXT NOT NULL UNIQUE,
         phone TEXT,
         address TEXT,
+        password TEXT NOT NULL,
         created_at TEXT NOT NULL
       )
     ''');
@@ -163,6 +164,7 @@ class DBHelper {
           email TEXT NOT NULL UNIQUE,
           phone TEXT,
           address TEXT,
+          password TEXT NOT NULL,
           created_at TEXT NOT NULL
         )
       ''');
@@ -182,6 +184,14 @@ class DBHelper {
         )
       ''');
     }
+
+    if (oldVersion < 4) {
+      try {
+        await db.execute(
+          "ALTER TABLE users ADD COLUMN password TEXT NOT NULL DEFAULT '123456'",
+        );
+      } catch (_) {}
+    }
   }
 
 
@@ -189,6 +199,7 @@ class DBHelper {
   Future<int> insertUser({
     required String name,
     required String email,
+    required String password,
     String phone = "",
     String address = "",
   }) async {
@@ -199,6 +210,7 @@ class DBHelper {
       {
         "name": name,
         "email": email,
+        "password": password,
         "phone": phone,
         "address": address,
         "created_at": DateTime.now().toIso8601String(),
@@ -227,6 +239,30 @@ class DBHelper {
 
     if (result.isEmpty) return null;
     return result.first;
+  }
+
+  Future<Map<String, dynamic>?> getUserByEmailAndPassword(String email, String password) async {
+    final db = await instance.database;
+
+    final result = await db.query(
+      "users",
+      where: "email = ? AND password = ?",
+      whereArgs: [email, password],
+    );
+
+    if (result.isEmpty) return null;
+    return result.first;
+  }
+
+  Future<int> updateUserPassword(String email, String newPassword) async {
+    final db = await instance.database;
+
+    return await db.update(
+      "users",
+      {"password": newPassword},
+      where: "email = ?",
+      whereArgs: [email],
+    );
   }
 
   Future<int> updateUser({

@@ -4,8 +4,8 @@ import 'package:food_delivery/common/extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 import 'package:food_delivery/view/login/login_view.dart';
 import '../../common/globs.dart';
-import '../../common/service_call.dart';
 import '../../common_widget/round_textfield.dart';
+import 'package:food_delivery/database/db_helper.dart';
 
 class NewPasswordView extends StatefulWidget {
   final Map nObj;
@@ -79,7 +79,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   }
 
    //TODO: Action
-  void btnSubmit() {
+  void btnSubmit() async {
 
     if(txtPassword.text.length <6) {
       mdShowAlert(Globs.appName, MSG.enterPassword, () { });
@@ -90,35 +90,24 @@ class _NewPasswordViewState extends State<NewPasswordView> {
       mdShowAlert(Globs.appName, MSG.enterPasswordNotMatch, () {});
       return;
     }
-   
 
     endEditing();
 
-    serviceCallForgotSetNew({"user_id": widget.nObj[KKey.userId].toString(), "reset_code": widget.nObj[KKey.resetCode].toString(),
-    "new_password": txtPassword.text
-    });
-  }
-
-  //TODO: ServiceCall
-
-  void serviceCallForgotSetNew(Map<String, dynamic> parameter) {
-    Globs.showHUD();
-
-    ServiceCall.post(parameter, SVKey.svForgotPasswordSetNew,
-        withSuccess: (responseObj) async {
+    String email = widget.nObj["email"] ?? "";
+    if (email.isNotEmpty) {
+      Globs.showHUD();
+      await DBHelper.instance.updateUserPassword(email, txtPassword.text);
       Globs.hideHUD();
-      if (responseObj[KKey.status] == "1") {
-        mdShowAlert(Globs.appName,
-            responseObj[KKey.message] as String? ?? MSG.success, () {
-              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginView() ), (route) => false);
-            });
-      } else {
-        mdShowAlert(Globs.appName,
-            responseObj[KKey.message] as String? ?? MSG.fail, () {});
+
+      if (mounted) {
+        mdShowAlert(Globs.appName, "Đổi mật khẩu thành công!", () {
+          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginView() ), (route) => false);
+        });
       }
-    }, failure: (err) async {
-      Globs.hideHUD();
-      mdShowAlert(Globs.appName, err.toString(), () {});
-    });
+    } else {
+      if (mounted) {
+        mdShowAlert(Globs.appName, "Lỗi: Không tìm thấy email", () {});
+      }
+    }
   }
 }

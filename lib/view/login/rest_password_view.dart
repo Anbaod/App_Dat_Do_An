@@ -4,8 +4,11 @@ import 'package:food_delivery/common/extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 import 'package:food_delivery/view/login/otp_view.dart';
 import '../../common/globs.dart';
-import '../../common/service_call.dart';
 import '../../common_widget/round_textfield.dart';
+import 'package:food_delivery/database/db_helper.dart';
+import 'package:food_delivery/common/email_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math';
 import 'new_password_view.dart';
 
 class ResetPasswordView extends StatefulWidget {
@@ -76,7 +79,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
   }
 
   //TODO: Action
-  void btnSubmit() {
+  void btnSubmit() async {
     if (!txtEmail.text.isEmail) {
       mdShowAlert(Globs.appName, MSG.enterEmail, () {});
       return;
@@ -84,31 +87,36 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
 
     endEditing();
 
-    serviceCallForgotRequest({
-      "email": txtEmail.text
-    });
-  }
-
-  //TODO: ServiceCall
-
-  void serviceCallForgotRequest(Map<String, dynamic> parameter) {
     Globs.showHUD();
+    final user = await DBHelper.instance.getUserByEmail(txtEmail.text);
+    Globs.hideHUD();
 
-    ServiceCall.post(parameter, SVKey.svForgotPasswordRequest,
-        withSuccess: (responseObj) async {
+    if (user != null) {
+      // Sinh OTP ngẫu nhiên 6 số
+      final otpCode = (100000 + Random().nextInt(900000)).toString();
+
+      Globs.showHUD();
+      bool isSent = await EmailHelper.sendResetPasswordEmail(txtEmail.text, otpCode);
       Globs.hideHUD();
-      if (responseObj[KKey.status] == "1") {
-        
-        Navigator.push(context, MaterialPageRoute(builder: (context) => OTPView(email: txtEmail.text) ) );
 
-        
+      if (isSent) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("reset_otp", otpCode); 
+
+        if (mounted) {
+          mdShowAlert(Globs.appName, "Mã OTP đã được gửi đến email của bạn", () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => OTPView(email: txtEmail.text) ) );
+          });
+        }
       } else {
-        mdShowAlert(Globs.appName,
-            responseObj[KKey.message] as String? ?? MSG.fail, () {});
+        if (mounted) {
+          mdShowAlert(Globs.appName, "Có lỗi xảy ra khi gửi email, vui lòng thử lại sau.", () {});
+        }
       }
-    }, failure: (err) async {
-      Globs.hideHUD();
-      mdShowAlert(Globs.appName, err.toString(), () {});
-    });
+    } else {
+      if (mounted) {
+        mdShowAlert(Globs.appName, "Email không tồn tại trong hệ thống", () {});
+      }
+    }
   }
 }
