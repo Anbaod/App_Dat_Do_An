@@ -20,13 +20,48 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
   late double price;
   int qty = 1;
   bool isFav = false;
+
+  late String image;
+  late String name;
+  late String type;
+  late String foodType;
+  late String rate;
+  late String description;
+
   String? selectedSize;
-  String? selectedIngredients;
+  String? selectedIngredient;
 
   @override
   void initState() {
     super.initState();
-    price = (widget.itemObj["price"] as num?)?.toDouble() ?? 15.0;
+
+    image = widget.itemObj["image"]?.toString() ?? "assets/img/detail_top.png";
+    name = widget.itemObj["name"]?.toString() ?? "Món ăn";
+    type = widget.itemObj["type"]?.toString() ?? "Food";
+    foodType = widget.itemObj["food_type"]?.toString() ?? "Fast Food";
+    rate = widget.itemObj["rate"]?.toString() ?? "4.5";
+    description = widget.itemObj["description"]?.toString() ??
+        "Món ăn thơm ngon, được chuẩn bị từ nguyên liệu tươi và phù hợp cho mọi bữa ăn.";
+
+    price = double.tryParse(widget.itemObj["price"]?.toString() ?? "15") ?? 15;
+  }
+
+  void addToCart() {
+    context.read<CartProvider>().addToCart(
+      CartItem(
+        name: name,
+        image: image,
+        price: price,
+        qty: qty,
+        size: selectedSize,
+        ingredients: selectedIngredient,
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Đã thêm $qty x $name vào giỏ hàng"),
+      ),
+    );
   }
 
   @override
@@ -282,12 +317,12 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                           ),
                                         );
                                       }).toList(),
-                                      onChanged: (val) {
-                                        setState(() {
-                                          selectedIngredients = val;
-                                        });
-                                      },
-                                      value: selectedIngredients,
+                                       onChanged: (val) {
+                                         setState(() {
+                                           selectedIngredient = val;
+                                         });
+                                       },
+                                       value: selectedIngredient,
                                       hint: Text(
                                         "- Select the ingredients -",
                                         textAlign: TextAlign.center,
@@ -477,27 +512,11 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                                     width: 130,
                                                     height: 25,
                                                     child: RoundIconButton(
-                                                        title: "Add to Cart",
-                                                        icon:
-                                                            "assets/img/shopping_add.png",
-                                                        color: TColor.primary,
-                                                        onPressed: () {
-                                                          final cart = context.read<CartProvider>();
-                                                          cart.addToCart(CartItem(
-                                                            name: widget.itemObj["name"]?.toString() ?? "Unknown",
-                                                            price: price,
-                                                            image: widget.itemObj["image"]?.toString() ?? "",
-                                                            qty: qty,
-                                                            size: selectedSize,
-                                                            ingredients: selectedIngredients,
-                                                          ));
-                                                          ScaffoldMessenger.of(context).showSnackBar(
-                                                            SnackBar(
-                                                              content: Text("Đã thêm ${widget.itemObj["name"]} x$qty vào giỏ hàng"),
-                                                              duration: const Duration(seconds: 2),
-                                                            ),
-                                                          );
-                                                        }),
+                                                      title: "Add to Cart",
+                                                      icon: "assets/img/shopping_add.png",
+                                                      color: TColor.primary,
+                                                      onPressed: addToCart,
+                                                    ),
                                                   )
                                                 ],
                                               )),
@@ -591,15 +610,18 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                         ),
                       ),
                       Consumer<CartProvider>(
-                        builder: (context, cart, child) {
+                        builder: (context, cartProvider, child) {
                           return Stack(
+                            alignment: Alignment.center,
                             children: [
                               IconButton(
                                 onPressed: () {
                                   Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => const MyOrderView()));
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const MyOrderView(),
+                                    ),
+                                  );
                                 },
                                 icon: Image.asset(
                                   "assets/img/shopping_cart.png",
@@ -608,20 +630,27 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                   color: TColor.white,
                                 ),
                               ),
-                              if (cart.itemCount > 0)
+                              if (cartProvider.itemCount > 0)
                                 Positioned(
-                                  right: 0,
-                                  top: 0,
+                                  right: 4,
+                                  top: 4,
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
                                       color: Colors.red,
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
                                     child: Text(
-                                      cart.itemCount.toString(),
-                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                      "${cartProvider.itemCount}",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                       textAlign: TextAlign.center,
                                     ),
                                   ),

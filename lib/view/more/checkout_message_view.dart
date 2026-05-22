@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/view/main_tabview/main_tabview.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
+import 'package:food_delivery/view/main_tabview/main_tabview.dart';
 
 import '../../common/color_extension.dart';
 
@@ -78,7 +79,16 @@ class _CheckoutMessageViewState extends State<CheckoutMessageView> {
             const SizedBox(
               height: 35,
             ),
-            RoundButton(title: "Track My Order", onPressed: () {}),
+            RoundButton(
+              title: "Track My Order",
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MainTabView()),
+                  (route) => false,
+                );
+              },
+            ),
             TextButton(
               onPressed: () {
                 Navigator.pushAndRemoveUntil(

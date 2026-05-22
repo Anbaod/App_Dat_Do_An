@@ -129,6 +129,7 @@ class _HomeViewState extends State<HomeView> {
                     Consumer<CartProvider>(
                       builder: (context, cart, child) {
                         return Stack(
+                          clipBehavior: Clip.none,
                           children: [
                             IconButton(
                               onPressed: () {
@@ -145,18 +146,25 @@ class _HomeViewState extends State<HomeView> {
                             ),
                             if (cart.itemCount > 0)
                               Positioned(
-                                right: 0,
-                                top: 0,
+                                right: 5,
+                                top: 5,
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
                                     color: Colors.red,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
                                   child: Text(
                                     cart.itemCount.toString(),
-                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:food_delivery/common/cart_provider.dart';
 import 'package:food_delivery/common/locator.dart';
 import 'package:food_delivery/view/login/welcome_view.dart';
 import 'package:food_delivery/view/on_boarding/startup_view.dart';
@@ -14,12 +13,7 @@ void main() async {
 
   prefs = await SharedPreferences.getInstance();
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => CartProvider(),
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -45,4 +39,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
+

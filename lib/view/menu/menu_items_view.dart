@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_textfield.dart';
+import 'package:provider/provider.dart';
+import '../../common/cart_provider.dart';
 
 import '../../common_widget/menu_item_row.dart';
 import '../more/my_order_view.dart';
@@ -126,18 +128,54 @@ class _MenuItemsViewState extends State<MenuItemsView> {
                             fontWeight: FontWeight.w800),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyOrderView()));
+                    Consumer<CartProvider>(
+                      builder: (context, cart, child) {
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const MyOrderView(),
+                                  ),
+                                );
+                              },
+                              icon: Image.asset(
+                                "assets/img/shopping_cart.png",
+                                width: 25,
+                                height: 25,
+                              ),
+                            ),
+                            if (cart.itemCount > 0)
+                              Positioned(
+                                right: 5,
+                                top: 5,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    cart.itemCount.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
                       },
-                      icon: Image.asset(
-                        "assets/img/shopping_cart.png",
-                        width: 25,
-                        height: 25,
-                      ),
                     ),
                   ],
                 ),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:food_delivery/common/color_extension.dart';
-import 'package:food_delivery/common_widget/round_button.dart';
 import 'package:provider/provider.dart';
 import 'package:food_delivery/common/cart_provider.dart';
+import 'package:food_delivery/common/color_extension.dart';
+import 'package:food_delivery/common_widget/round_button.dart';
+import 'package:food_delivery/database/db_helper.dart';
 
 import 'change_address_view.dart';
 import 'checkout_message_view.dart';
@@ -39,7 +40,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     }
   }
 
-  void _sendOrder() {
+  void _sendOrder() async {
     if (selectMethod == -1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -49,20 +50,59 @@ class _CheckoutViewState extends State<CheckoutView> {
       return;
     }
 
-    context.read<CartProvider>().clearCart();
+    final cart = context.read<CartProvider>();
+    if (cart.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Giỏ hàng của bạn đang trống"),
+        ),
+      );
+      return;
+    }
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return const CheckoutMessageView();
-      },
-    );
+    // Convert CartItem to Map<String, dynamic> for insertOrderWithItems
+    final orderItems = cart.items.map((item) => {
+      "name": item.name,
+      "image": item.image,
+      "price": item.price,
+      "qty": item.qty,
+    }).toList();
+
+    try {
+      await DBHelper.instance.insertOrderWithItems(
+        address: deliveryAddress,
+        paymentMethod: paymentArr[selectMethod]["name"],
+        total: cart.total,
+        items: orderItems,
+      );
+
+      // Xóa giỏ hàng local SQLite
+      cart.clearCart();
+
+      if (mounted) {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          builder: (context) {
+            return const CheckoutMessageView();
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Lỗi khi đặt hàng: $e"),
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final cart = context.watch<CartProvider>();
     return Scaffold(
       backgroundColor: TColor.white,
       body: SingleChildScrollView(
@@ -264,26 +304,30 @@ class _CheckoutViewState extends State<CheckoutView> {
                   children: [
                     const SizedBox(height: 15),
 
-                    Builder(
-                      builder: (context) {
-                        final cart = context.watch<CartProvider>();
-                        return Column(
-                          children: [
-                            _buildPriceRow("Tạm tính", "\$${cart.subTotal.toStringAsFixed(2)}"),
-                            const SizedBox(height: 8),
-                            _buildPriceRow("Phí giao hàng", "\$${cart.deliveryCost.toStringAsFixed(2)}"),
-                            const SizedBox(height: 8),
-                            _buildPriceRow("Giảm giá", "-\$${cart.discount.toStringAsFixed(2)}"),
-                            const SizedBox(height: 15),
-                            Divider(
-                              color: TColor.secondaryText.withOpacity(0.5),
-                              height: 1,
-                            ),
-                            const SizedBox(height: 15),
-                            _buildPriceRow("Tổng cộng", "\$${cart.total.toStringAsFixed(2)}", isTotal: true),
-                          ],
-                        );
-                      },
+                    _buildPriceRow("Tạm tính", "\$${cart.subTotal.toStringAsFixed(2)}"),
+                    const SizedBox(height: 8),
+
+                    _buildPriceRow(
+                        "Phí giao hàng", "\$${cart.deliveryCost.toStringAsFixed(2)}"),
+                    const SizedBox(height: 8),
+
+                    if (cart.discount > 0) ...[
+                      _buildPriceRow("Giảm giá", "-\$${cart.discount.toStringAsFixed(2)}"),
+                      const SizedBox(height: 8),
+                    ],
+                    const SizedBox(height: 7),
+
+                    Divider(
+                      color: TColor.secondaryText.withOpacity(0.5),
+                      height: 1,
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    _buildPriceRow(
+                      "Tổng cộng",
+                      "\$${cart.total.toStringAsFixed(2)}",
+                      isTotal: true,
                     ),
                   ],
                 ),
