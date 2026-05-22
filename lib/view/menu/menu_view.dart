@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../common/color_extension.dart';
 import '../../common_widget/round_textfield.dart';
 import '../more/my_order_view.dart';
+import 'package:food_delivery/database/db_helper.dart';
 import 'menu_items_view.dart';
 
 class MenuView extends StatefulWidget {
@@ -15,35 +16,36 @@ class MenuView extends StatefulWidget {
 class _MenuViewState extends State<MenuView> {
   TextEditingController txtSearch = TextEditingController();
 
-  List<Map<String, dynamic>> menuArr = [
-    {
-      "name": "Food",
-      "image": "assets/img/menu_1.png",
-      "items_count": "120",
-    },
-    {
-      "name": "Beverages",
-      "image": "assets/img/menu_2.png",
-      "items_count": "220",
-    },
-    {
-      "name": "Desserts",
-      "image": "assets/img/menu_3.png",
-      "items_count": "155",
-    },
-    {
-      "name": "Promotions",
-      "image": "assets/img/menu_4.png",
-      "items_count": "25",
-    },
-  ];
-
+  List<Map<String, dynamic>> menuArr = [];
   List<Map<String, dynamic>> filteredMenu = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    filteredMenu = menuArr;
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    final categories = await DBHelper.instance.getCategories();
+    final db = await DBHelper.instance.database;
+    final allFoods = await db.query("foods");
+
+    List<Map<String, dynamic>> updatedCategories = [];
+    for (var cat in categories) {
+      int count = allFoods.where((f) => f['category'] == cat['name']).length;
+      updatedCategories.add({
+        "name": cat['name'],
+        "image": cat['image'] ?? "assets/img/menu_1.png",
+        "items_count": count.toString(),
+      });
+    }
+
+    setState(() {
+      menuArr = updatedCategories;
+      filteredMenu = menuArr;
+      isLoading = false;
+    });
   }
 
   void searchMenu(String value) {
@@ -151,7 +153,12 @@ class _MenuViewState extends State<MenuView> {
 
                   const SizedBox(height: 30),
 
-                  filteredMenu.isEmpty
+                  isLoading
+                      ? const Padding(
+                          padding: EdgeInsets.all(30),
+                          child: CircularProgressIndicator(),
+                        )
+                      : filteredMenu.isEmpty
                       ? Padding(
                     padding: const EdgeInsets.all(30),
                     child: Text(

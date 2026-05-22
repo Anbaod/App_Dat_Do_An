@@ -2,7 +2,7 @@ import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 
 class EmailHelper {
-  static const String smtpUsername = '2224802010768@student.tdmu.edu.vn';
+  static const String smtpUsername = 'ntn1552k4@gmail.com';
   static const String smtpPassword = 'mtckgxkxmobxvwih';
 
   static Future<bool> sendResetPasswordEmail(String toEmail, String otpCode) async {

@@ -1,6 +1,9 @@
+import '../../common/color_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:food_delivery/common/color_extension.dart';
-import 'package:food_delivery/common_widget/round_button.dart';
+import '../../common/format_utils.dart';
+import '../../common/globs.dart';
+import '../../common/service_call.dart';
+import '../../common_widget/round_button.dart';
 
 import '../../database/db_helper.dart';
 import 'change_address_view.dart';
@@ -27,8 +30,8 @@ class _CheckoutViewState extends State<CheckoutView> {
 
   String deliveryAddress = "Thủ Dầu Một\nBình Dương, Việt Nam";
 
-  double deliveryCost = 2;
-  double discount = 4;
+  double deliveryCost = 20000.0;
+  double discount = 0.0;
 
   double get subTotal => widget.subTotal;
 
@@ -65,7 +68,23 @@ class _CheckoutViewState extends State<CheckoutView> {
       total: total,
       items: widget.cartItems,
     );
-    
+    // Save used offers
+    String? userIdStr = ServiceCall.userPayload["id"]?.toString();
+    int userId = int.tryParse(userIdStr ?? "0") ?? 0;
+    if (userId > 0) {
+      final db = await DBHelper.instance.database;
+      final allOffers = await db.query("offers");
+      for (var cartItem in widget.cartItems) {
+        // Find if this item matches any offer name
+        for (var offer in allOffers) {
+          if (offer["name"].toString() == cartItem["name"].toString()) {
+            // Record this offer as used for the user
+            await DBHelper.instance.insertUsedOffer(userId, offer["id"] as int);
+          }
+        }
+      }
+    }
+
     // Clear cart after successful order
     await DBHelper.instance.clearCart();
 

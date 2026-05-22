@@ -3,6 +3,7 @@ import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_textfield.dart';
 
 import '../../common_widget/menu_item_row.dart';
+import '../../database/db_helper.dart';
 import '../more/my_order_view.dart';
 import 'item_details_view.dart';
 
@@ -21,162 +22,33 @@ class MenuItemsView extends StatefulWidget {
 class _MenuItemsViewState extends State<MenuItemsView> {
   TextEditingController txtSearch = TextEditingController();
 
-  List<Map<String, dynamic>> allItems = [
-    {
-      "category": "Food",
-      "image": "assets/img/menu_1.png",
-      "name": "Beef Burger",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "King Burgers",
-      "food_type": "Fast Food",
-      "price": 16.0,
-      "description": "Burger bò thơm ngon với phô mai, rau tươi và sốt đặc biệt.",
-    },
-    {
-      "category": "Food",
-      "image": "assets/img/menu_2.png",
-      "name": "Classic Burger",
-      "rate": "4.8",
-      "rating": "98",
-      "type": "King Burgers",
-      "food_type": "Fast Food",
-      "price": 14.0,
-      "description": "Burger truyền thống dễ ăn, phù hợp cho mọi bữa ăn.",
-    },
-    {
-      "category": "Food",
-      "image": "assets/img/menu_3.png",
-      "name": "Pizza Hải Sản",
-      "rate": "4.7",
-      "rating": "102",
-      "type": "Pizza House",
-      "food_type": "Pizza",
-      "price": 22.0,
-      "description": "Pizza hải sản với tôm, mực, phô mai và sốt cà chua.",
-    },
-
-    {
-      "category": "Beverages",
-      "image": "assets/img/offer_1.png",
-      "name": "Cà Phê Sữa Đá",
-      "rate": "4.9",
-      "rating": "200",
-      "type": "Cafe Việt",
-      "food_type": "Beverages",
-      "price": 5.0,
-      "description": "Cà phê sữa đá đậm vị Việt Nam, thơm béo và tỉnh táo.",
-    },
-    {
-      "category": "Beverages",
-      "image": "assets/img/dess_3.png",
-      "name": "Street Shake",
-      "rate": "4.7",
-      "rating": "86",
-      "type": "Café Racer",
-      "food_type": "Beverages",
-      "price": 10.0,
-      "description": "Đồ uống mát lạnh, béo nhẹ, thích hợp dùng kèm đồ ăn nhanh.",
-    },
-    {
-      "category": "Beverages",
-      "image": "assets/img/menu_3.png",
-      "name": "Trà Sữa Trân Châu",
-      "rate": "4.9",
-      "rating": "210",
-      "type": "Milk Tea",
-      "food_type": "Drink",
-      "price": 5.0,
-      "description": "Trà sữa trân châu ngọt dịu, thơm béo và dễ uống.",
-    },
-
-    {
-      "category": "Desserts",
-      "image": "assets/img/dess_1.png",
-      "name": "French Apple Pie",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Minute by tuk tuk",
-      "food_type": "Desserts",
-      "price": 15.0,
-      "description": "Bánh táo thơm ngon, lớp vỏ giòn nhẹ và nhân táo ngọt dịu.",
-    },
-    {
-      "category": "Desserts",
-      "image": "assets/img/dess_2.png",
-      "name": "Dark Chocolate Cake",
-      "rate": "4.8",
-      "rating": "98",
-      "type": "Cakes by Tella",
-      "food_type": "Desserts",
-      "price": 18.0,
-      "description": "Bánh socola đậm vị, mềm mịn và hấp dẫn.",
-    },
-    {
-      "category": "Desserts",
-      "image": "assets/img/dess_4.png",
-      "name": "Fudgy Chewy Brownies",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Minute by tuk tuk",
-      "food_type": "Desserts",
-      "price": 16.0,
-      "description": "Brownies mềm dẻo, thơm mùi socola và ngọt hài hòa.",
-    },
-
-    {
-      "category": "Promotions",
-      "image": "assets/img/offer_1.png",
-      "name": "Café de Noires",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafe",
-      "food_type": "Western Food",
-      "price": 12.0,
-      "discount": "Giảm 20%",
-      "description": "Ưu đãi đặc biệt cho đồ uống và món ăn nhẹ.",
-    },
-    {
-      "category": "Promotions",
-      "image": "assets/img/offer_2.png",
-      "name": "Isso",
-      "rate": "4.8",
-      "rating": "98",
-      "type": "Cafe",
-      "food_type": "Fast Food",
-      "price": 10.0,
-      "discount": "Mua 1 tặng 1",
-      "description": "Khuyến mãi mua 1 tặng 1 trong hôm nay.",
-    },
-    {
-      "category": "Promotions",
-      "image": "assets/img/offer_3.png",
-      "name": "Cafe Beans",
-      "rate": "4.7",
-      "rating": "86",
-      "type": "Cafe",
-      "food_type": "Coffee",
-      "price": 8.0,
-      "discount": "Freeship",
-      "description": "Miễn phí giao hàng cho đơn từ 50.000đ.",
-    },
-  ];
-
   List<Map<String, dynamic>> categoryItems = [];
   List<Map<String, dynamic>> filteredItems = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-
-    final String category = widget.mObj["name"]?.toString() ?? "Food";
-
-    categoryItems = allItems.where((item) {
-      return item["category"]?.toString() == category;
-    }).toList();
-
-    filteredItems = categoryItems;
+    _loadData();
   }
+
+  Future<void> _loadData() async {
+    final String category = widget.mObj["name"]?.toString() ?? "Phở";
+    final db = await DBHelper.instance.database;
+    final allFoods = await db.query(
+      "foods",
+      where: "category = ?",
+      whereArgs: [category],
+    );
+
+    setState(() {
+      categoryItems = List<Map<String, dynamic>>.from(allFoods);
+      filteredItems = categoryItems;
+      isLoading = false;
+    });
+  }
+
+  // Removed old initState
 
   void searchFood(String value) {
     setState(() {
@@ -287,7 +159,9 @@ class _MenuItemsViewState extends State<MenuItemsView> {
 
               const SizedBox(height: 15),
 
-              filteredItems.isEmpty
+              isLoading
+                  ? const CircularProgressIndicator()
+                  : filteredItems.isEmpty
                   ? Padding(
                 padding: const EdgeInsets.all(30),
                 child: Text(

@@ -35,7 +35,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                 height: 64,
               ),
               Text(
-                "Reset Password",
+                "Lấy lại mật khẩu",
                 style: TextStyle(
                     color: TColor.primaryText,
                     fontSize: 30,
@@ -47,7 +47,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
               ),
 
               Text(
-                "Please enter your email to receive a\n reset code to create a new password via email",
+                "Vui lòng nhập email của bạn để nhận\n mã khôi phục mật khẩu",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     color: TColor.secondaryText,
@@ -58,7 +58,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                 height: 60,
               ),
               RoundTextfield(
-                hintText: "Your Email",
+                hintText: "Email của bạn",
                 controller: txtEmail,
                 keyboardType: TextInputType.emailAddress,
               ),
@@ -66,7 +66,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                 height: 30,
               ),
              
-              RoundButton(title: "Send", onPressed: () {
+              RoundButton(title: "Gửi", onPressed: () {
                 btnSubmit();
                 
               }),

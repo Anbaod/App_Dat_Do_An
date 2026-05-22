@@ -75,7 +75,7 @@ class PopularRestaurantRow extends StatelessWidget {
                       const SizedBox(width: 8),
 
                       Text(
-                        "($rating Ratings)",
+                        "($rating đánh giá)",
                         style: TextStyle(
                           color: TColor.secondaryText,
                           fontSize: 11,

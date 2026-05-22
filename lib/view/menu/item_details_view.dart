@@ -3,6 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:food_delivery/common_widget/round_icon_button.dart';
 
 import '../../common/color_extension.dart';
+import '../../common/format_utils.dart';
 import '../../database/db_helper.dart';
 import '../more/my_order_view.dart';
 
@@ -188,7 +189,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                       const SizedBox(height: 4),
 
                                       Text(
-                                        "$rate Star Ratings",
+                                        "$rate sao",
                                         style: TextStyle(
                                           color: TColor.primary,
                                           fontSize: 11,
@@ -543,7 +544,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                               const SizedBox(height: 15),
 
                                               Text(
-                                                "${(price * qty).toStringAsFixed(0)} VNĐ",
+                                                FormatUtils.formatVND(price * qty),
                                                 style: TextStyle(
                                                   color: TColor.primaryText,
                                                   fontSize: 21,

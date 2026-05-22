@@ -8,8 +8,8 @@ class DBHelper {
 
   DBHelper._init();
 
-  static const _databaseName = "food_delivery.db";
-  static const _databaseVersion = 9;
+  static const _databaseName = "food_delivery_v4.db";
+  static const _databaseVersion = 1;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -24,7 +24,7 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 8,
+      version: _databaseVersion,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -39,6 +39,7 @@ class DBHelper {
         phone TEXT,
         address TEXT,
         password TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
         created_at TEXT NOT NULL
       )
     ''');
@@ -65,6 +66,7 @@ class DBHelper {
         payment_method TEXT NOT NULL,
         total REAL NOT NULL,
         status TEXT NOT NULL,
+        is_reviewed INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       )
     ''');
@@ -132,8 +134,32 @@ class DBHelper {
       )
     ''');
 
+    await db.execute('''
+      CREATE TABLE user_used_offers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        offer_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
     await _seedCategories(db);
     await _seedFoods(db);
+
+    // Seed admin user
+    await db.insert(
+      "users",
+      {
+        "name": "Admin",
+        "email": "admin@gmail.com",
+        "password": "123",
+        "phone": "",
+        "address": "",
+        "role": "admin",
+        "created_at": DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -307,10 +333,10 @@ class DBHelper {
 
   Future<void> _seedCategories(Database db) async {
     final categories = [
-      {"name": "Food", "image": "assets/img/cat_1.png"},
-      {"name": "Beverages", "image": "assets/img/cat_2.png"},
-      {"name": "Desserts", "image": "assets/img/cat_3.png"},
-      {"name": "Promotions", "image": "assets/img/cat_4.png"},
+      {"name": "Phở", "image": "assets/img/pho_bo.png"},
+      {"name": "Bánh Mì", "image": "assets/img/banh_mi.png"},
+      {"name": "Cơm", "image": "assets/img/com_tam.png"},
+      {"name": "Bún", "image": "assets/img/bun_cha.png"},
     ];
     for (var cat in categories) {
       await db.insert("categories", {
@@ -324,44 +350,124 @@ class DBHelper {
   Future<void> _seedFoods(Database db) async {
     final foods = [
       {
-        "name": "Beef Burger",
-        "image": "assets/img/item_1.png",
-        "price": 16.0,
+        "name": "Phở Bò Đặc Biệt",
+        "image": "assets/img/pho_bo.png",
+        "price": 55000.0,
         "rate": "4.9",
-        "category": "Food",
-        "description": "Beef Burger with cheese and bacon",
-        "food_type": "Fast Food",
-        "type": "Food"
+        "category": "Phở",
+        "description": "Phở bò nấu theo hương vị truyền thống, đậm đà.",
+        "food_type": "Món Nước",
+        "type": "Món Chính"
       },
       {
-        "name": "Classic Burger",
-        "image": "assets/img/item_2.png",
-        "price": 14.0,
-        "rate": "4.5",
-        "category": "Food",
-        "description": "Classic beef burger",
-        "food_type": "Fast Food",
-        "type": "Food"
-      },
-      {
-        "name": "Coffee",
-        "image": "assets/img/cat_2.png",
-        "price": 5.0,
-        "rate": "4.8",
-        "category": "Beverages",
-        "description": "Hot black coffee",
-        "food_type": "Drinks",
-        "type": "Drink"
-      },
-      {
-        "name": "Cheese Cake",
-        "image": "assets/img/cat_3.png",
-        "price": 8.0,
+        "name": "Phở Gà Ta",
+        "image": "assets/img/pho_bo.png",
+        "price": 45000.0,
         "rate": "4.7",
-        "category": "Desserts",
-        "description": "Sweet cheese cake",
-        "food_type": "Dessert",
-        "type": "Dessert"
+        "category": "Phở",
+        "description": "Phở gà ta dai ngon, nước dùng thanh ngọt.",
+        "food_type": "Món Nước",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Phở Trộn Cuốn",
+        "image": "assets/img/pho_bo.png",
+        "price": 50000.0,
+        "rate": "4.8",
+        "category": "Phở",
+        "description": "Phở trộn chua ngọt, dễ ăn và chống ngán.",
+        "food_type": "Món Trộn",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bánh Mì Thịt Nướng",
+        "image": "assets/img/banh_mi.png",
+        "price": 25000.0,
+        "rate": "4.8",
+        "category": "Bánh Mì",
+        "description": "Bánh mì giòn rụm với thịt nướng thơm lừng.",
+        "food_type": "Ăn Nhanh",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bánh Mì Chả Lụa",
+        "image": "assets/img/banh_mi.png",
+        "price": 20000.0,
+        "rate": "4.6",
+        "category": "Bánh Mì",
+        "description": "Bánh mì truyền thống với chả lụa thủ công.",
+        "food_type": "Ăn Nhanh",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bánh Mì Heo Quay",
+        "image": "assets/img/banh_mi.png",
+        "price": 30000.0,
+        "rate": "4.9",
+        "category": "Bánh Mì",
+        "description": "Bánh mì heo quay da giòn rụm, béo ngậy.",
+        "food_type": "Ăn Nhanh",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Cơm Tấm Sườn Bì",
+        "image": "assets/img/com_tam.png",
+        "price": 45000.0,
+        "rate": "4.7",
+        "category": "Cơm",
+        "description": "Cơm tấm dẻo thơm, sườn nướng mềm ngọt.",
+        "food_type": "Món Cơm",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Cơm Tấm Chả Trứng",
+        "image": "assets/img/com_tam.png",
+        "price": 35000.0,
+        "rate": "4.5",
+        "category": "Cơm",
+        "description": "Cơm tấm với chả trứng hấp thơm lừng.",
+        "food_type": "Món Cơm",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Cơm Gà Xối Mỡ",
+        "image": "assets/img/com_tam.png",
+        "price": 40000.0,
+        "rate": "4.8",
+        "category": "Cơm",
+        "description": "Cơm gà xối mỡ da giòn rụm, thịt mọng nước.",
+        "food_type": "Món Cơm",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bún Chả Hà Nội",
+        "image": "assets/img/bun_cha.png",
+        "price": 50000.0,
+        "rate": "4.9",
+        "category": "Bún",
+        "description": "Bún chả chuẩn vị Hà Nội với thịt nướng than hoa.",
+        "food_type": "Món Nước",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bún Bò Huế",
+        "image": "assets/img/bun_cha.png",
+        "price": 55000.0,
+        "rate": "4.8",
+        "category": "Bún",
+        "description": "Bún bò đậm đà hương vị miền Trung.",
+        "food_type": "Món Nước",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bún Thịt Nướng",
+        "image": "assets/img/bun_cha.png",
+        "price": 40000.0,
+        "rate": "4.7",
+        "category": "Bún",
+        "description": "Bún thịt nướng với nước mắm chua ngọt đặc trưng.",
+        "food_type": "Món Trộn",
+        "type": "Món Chính"
       },
     ];
     for (var food in foods) {
@@ -879,9 +985,36 @@ class DBHelper {
     return await db.query("offers", orderBy: "id DESC");
   }
 
+  Future<int> updateOffer(int id, Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.update("offers", data, where: "id = ?", whereArgs: [id]);
+  }
+
   Future<int> deleteOffer(int id) async {
     final db = await instance.database;
     return await db.delete("offers", where: "id = ?", whereArgs: [id]);
+  }
+
+  Future<int> insertUsedOffer(int userId, int offerId) async {
+    final db = await instance.database;
+    return await db.insert(
+      "user_used_offers",
+      {
+        "user_id": userId,
+        "offer_id": offerId,
+        "created_at": DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
+  Future<bool> checkOfferUsed(int userId, int offerId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      "user_used_offers",
+      where: "user_id = ? AND offer_id = ?",
+      whereArgs: [userId, offerId],
+    );
+    return result.isNotEmpty;
   }
 
   Future<void> close() async {

@@ -7,9 +7,11 @@ import '../../common/service_call.dart';
 import '../../common_widget/category_cell.dart';
 import '../../common_widget/most_popular_cell.dart';
 import '../../common_widget/popular_resutaurant_row.dart';
-import '../../common_widget/recent_item_row.dart';
 import '../../common_widget/view_all_title_row.dart';
 import '../more/my_order_view.dart';
+import 'package:food_delivery/database/db_helper.dart';
+import 'package:food_delivery/common/format_utils.dart';
+import 'package:food_delivery/view/menu/menu_items_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -21,85 +23,41 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   TextEditingController txtSearch = TextEditingController();
 
-  List catArr = [
-    {"image": "assets/img/cat_offer.png", "name": "Offers"},
-    {"image": "assets/img/cat_sri.png", "name": "Sri Lankan"},
-    {"image": "assets/img/cat_3.png", "name": "Italian"},
-    {"image": "assets/img/cat_4.png", "name": "Indian"},
-  ];
+  List<Map<String, dynamic>> catArr = [];
+  List<Map<String, dynamic>> popArr = [];
+  List<Map<String, dynamic>> mostPopArr = [];
+  List<Map<String, dynamic>> recentArr = [];
+  bool isLoading = true;
 
-  List popArr = [
-    {
-      "image": "assets/img/res_1.png",
-      "name": "Minute by tuk tuk",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/res_2.png",
-      "name": "Café de Noir",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/res_3.png",
-      "name": "Bakes by Tella",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-  List mostPopArr = [
-    {
-      "image": "assets/img/m_res_1.png",
-      "name": "Minute by tuk tuk",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/m_res_2.png",
-      "name": "Café de Noir",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-  ];
+  Future<void> _loadData() async {
+    final categories = await DBHelper.instance.getCategories();
+    final db = await DBHelper.instance.database;
+    final allFoods = await db.query("foods");
 
-  List recentArr = [
-    {
-      "image": "assets/img/item_1.png",
-      "name": "Mulberry Pizza by Josh",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/item_2.png",
-      "name": "Barita",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/item_3.png",
-      "name": "Pizza Rush Hour",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-  ];
+    // Lấy 3 danh mục đầu
+    List<Map<String, dynamic>> topCats = [];
+    for (int i = 0; i < categories.length && i < 4; i++) {
+      topCats.add(categories[i]);
+    }
+
+    // Phân loại món ăn
+    List<Map<String, dynamic>> foods = List<Map<String, dynamic>>.from(allFoods);
+    
+    // Giả sử có dữ liệu
+    setState(() {
+      catArr = topCats;
+      popArr = foods.take(3).toList(); // Lấy 3 món
+      mostPopArr = foods.skip(3).take(2).toList();
+      recentArr = foods.skip(1).take(3).toList();
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +76,7 @@ class _HomeViewState extends State<HomeView> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Good morning ${ServiceCall.userPayload[KKey.name] ?? ""}!",
+                      "Chào buổi sáng ${ServiceCall.userPayload[KKey.name] ?? ""}!",
                       style: TextStyle(
                           color: TColor.primaryText,
                           fontSize: 20,
@@ -185,7 +143,7 @@ class _HomeViewState extends State<HomeView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: RoundTextfield(
-                  hintText: "Search Food",
+                  hintText: "Tìm món ăn",
                   controller: txtSearch,
                   left: Container(
                     alignment: Alignment.center,
@@ -211,7 +169,14 @@ class _HomeViewState extends State<HomeView> {
                     var cObj = catArr[index] as Map? ?? {};
                     return CategoryCell(
                       cObj: cObj,
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => MenuItemsView(
+                                      mObj: {"name": cObj["name"].toString()},
+                                    )));
+                      },
                     );
                   }),
                 ),
@@ -219,7 +184,7 @@ class _HomeViewState extends State<HomeView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: ViewAllTitleRow(
-                  title: "Popular Restaurants",
+                  title: "Nhà hàng phổ biến",
                   onView: () {},
                 ),
               ),
@@ -239,7 +204,7 @@ class _HomeViewState extends State<HomeView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: ViewAllTitleRow(
-                  title: "Most Popular",
+                  title: "Được yêu thích nhất",
                   onView: () {},
                 ),
               ),
@@ -261,7 +226,7 @@ class _HomeViewState extends State<HomeView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: ViewAllTitleRow(
-                  title: "Recent Items",
+                  title: "Món ăn gần đây",
                   onView: () {},
                 ),
               ),
@@ -272,8 +237,8 @@ class _HomeViewState extends State<HomeView> {
                 itemCount: recentArr.length,
                 itemBuilder: ((context, index) {
                   var rObj = recentArr[index] as Map? ?? {};
-                  return RecentItemRow(
-                    rObj: rObj,
+                  return PopularRestaurantRow(
+                    pObj: rObj,
                     onTap: () {},
                   );
                 }),

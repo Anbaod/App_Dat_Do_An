@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
+import 'package:food_delivery/common/format_utils.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
 
 import 'package:food_delivery/database/db_helper.dart';
@@ -15,7 +16,7 @@ class MyOrderView extends StatefulWidget {
 class _MyOrderViewState extends State<MyOrderView> {
   List<Map<String, dynamic>> itemArr = [];
   double subTotal = 0;
-  double deliveryCost = 2; // Fixed cost or variable
+  double deliveryCost = 0.0;
 
   @override
   void initState() {
@@ -27,11 +28,12 @@ class _MyOrderViewState extends State<MyOrderView> {
     final data = await DBHelper.instance.getCart();
     double total = 0;
     for (var item in data) {
-      total += (item['price'] * item['qty']);
+      total += (double.tryParse(item['price'].toString()) ?? 0.0) * (item['qty'] ?? 0);
     }
     setState(() {
       itemArr = data;
       subTotal = total;
+      deliveryCost = itemArr.isNotEmpty ? 20000.0 : 0.0;
     });
   }
 
@@ -64,7 +66,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                     ),
                     Expanded(
                       child: Text(
-                        "My Order",
+                        "Đơn hàng của tôi",
                         style: TextStyle(
                             color: TColor.primaryText,
                             fontSize: 20,
@@ -112,7 +114,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                             width: 15,
                           ),
                           Text(
-                            "${cObj["price"].toString()} VNĐ",
+                            FormatUtils.formatVND(double.parse(cObj["price"].toString())),
                             style: TextStyle(
                                 color: TColor.primaryText,
                                 fontSize: 13,
@@ -133,7 +135,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Delivery Instructions",
+                          "Ghi chú giao hàng",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: TColor.primaryText,
@@ -144,7 +146,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                           onPressed: () {},
                           icon: Icon(Icons.add, color: TColor.primary),
                           label: Text(
-                            "Add Notes",
+                            "Thêm ghi chú",
                             style: TextStyle(
                                 color: TColor.primary,
                                 fontSize: 13,
@@ -164,7 +166,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Sub Total",
+                          "Tạm tính",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: TColor.primaryText,
@@ -172,7 +174,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                               fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          "$subTotal VNĐ",
+                          FormatUtils.formatVND(subTotal),
                           style: TextStyle(
                               color: TColor.primary,
                               fontSize: 13,
@@ -187,7 +189,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Delivery Cost",
+                          "Phí giao hàng",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: TColor.primaryText,
@@ -195,7 +197,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                               fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          "$deliveryCost VNĐ",
+                          FormatUtils.formatVND(deliveryCost),
                           style: TextStyle(
                               color: TColor.primary,
                               fontSize: 13,
@@ -217,7 +219,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Total",
+                          "Tổng cộng",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: TColor.primaryText,
@@ -225,7 +227,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                               fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          "${subTotal + deliveryCost} VNĐ",
+                          FormatUtils.formatVND(subTotal + deliveryCost),
                           style: TextStyle(
                               color: TColor.primary,
                               fontSize: 22,
@@ -237,7 +239,7 @@ class _MyOrderViewState extends State<MyOrderView> {
                       height: 25,
                     ),
                     RoundButton(
-                      title: "Checkout",
+                      title: "Thanh toán",
                       onPressed: () {
                         if (itemArr.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(

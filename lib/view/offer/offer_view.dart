@@ -4,6 +4,8 @@ import 'package:food_delivery/common_widget/round_button.dart';
 
 import '../../common_widget/popular_resutaurant_row.dart';
 import '../../database/db_helper.dart';
+import '../../common/globs.dart';
+import '../../common/service_call.dart';
 import '../more/my_order_view.dart';
 
 class OfferView extends StatefulWidget {
@@ -27,10 +29,27 @@ class _OfferViewState extends State<OfferView> {
 
   Future<void> _loadOffers() async {
     final data = await DBHelper.instance.getOffers();
-    setState(() {
-      offerArr = data;
-      filteredOffers = data;
-    });
+    String? userIdStr = ServiceCall.userPayload["id"]?.toString();
+    int userId = int.tryParse(userIdStr ?? "0") ?? 0;
+    
+    List<Map<String, dynamic>> availableOffers = [];
+    if (userId > 0) {
+      for (var offer in data) {
+        bool isUsed = await DBHelper.instance.checkOfferUsed(userId, offer["id"] as int);
+        if (!isUsed) {
+          availableOffers.add(offer);
+        }
+      }
+    } else {
+      availableOffers = data;
+    }
+
+    if (mounted) {
+      setState(() {
+        offerArr = availableOffers;
+        filteredOffers = availableOffers;
+      });
+    }
   }
 
   void searchOffer(String value) {

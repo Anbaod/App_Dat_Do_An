@@ -48,10 +48,13 @@ class _AdminOfferManagementViewState extends State<AdminOfferManagementView> {
     );
   }
 
-  void _showOfferDialog() {
+  void _showOfferDialog([Map<String, dynamic>? offer]) {
     showDialog(
       context: context,
-      builder: (context) => _OfferDialog(onSave: _loadOffers),
+      builder: (context) => _OfferDialog(
+        offer: offer,
+        onSave: _loadOffers,
+      ),
     );
   }
 
@@ -79,9 +82,18 @@ class _AdminOfferManagementViewState extends State<AdminOfferManagementView> {
                         leading: Image.asset(o['image'] ?? "assets/img/offer_1.png", width: 50, height: 50, fit: BoxFit.contain),
                         title: Text(o['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text("${o['discount']} (Giá gốc: ${o['price']} VNĐ)", style: TextStyle(color: TColor.primary, fontWeight: FontWeight.bold)),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteOffer(o['id']),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => _showOfferDialog(o),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteOffer(o['id']),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -97,9 +109,14 @@ class _AdminOfferManagementViewState extends State<AdminOfferManagementView> {
 }
 
 class _OfferDialog extends StatefulWidget {
+  final Map<String, dynamic>? offer;
   final VoidCallback onSave;
 
-  const _OfferDialog({required this.onSave});
+  const _OfferDialog({
+    super.key,
+    this.offer,
+    required this.onSave,
+  });
 
   @override
   State<_OfferDialog> createState() => _OfferDialogState();
@@ -141,7 +158,17 @@ class _OfferDialogState extends State<_OfferDialog> {
       allFoods = foodData;
       isLoading = false;
 
-      if (categories.isNotEmpty) {
+      if (widget.offer != null) {
+        selectedDiscountType = widget.offer!['discount'] ?? "Giảm 10%";
+        // Find category from food name
+        final foodName = widget.offer!['name'];
+        final foodMatch = allFoods.where((f) => f['name'] == foodName).toList();
+        if (foodMatch.isNotEmpty) {
+          selectedFood = foodMatch.first;
+          selectedCategory = selectedFood!['category'];
+          _filterFoods();
+        }
+      } else if (categories.isNotEmpty) {
         selectedCategory = categories.first['name'];
         _filterFoods();
       }
@@ -162,7 +189,7 @@ class _OfferDialogState extends State<_OfferDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Thêm ưu đãi mới"),
+      title: Text(widget.offer != null ? "Sửa ưu đãi" : "Thêm ưu đãi mới"),
       content: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -237,7 +264,7 @@ class _OfferDialogState extends State<_OfferDialog> {
         ElevatedButton(
           onPressed: () async {
             if (selectedFood != null) {
-              await DBHelper.instance.insertOffer({
+              final data = {
                 "name": selectedFood!['name'],
                 "image": selectedFood!['image'] ?? "assets/img/offer_1.png",
                 "discount": selectedDiscountType,
@@ -245,7 +272,12 @@ class _OfferDialogState extends State<_OfferDialog> {
                 "type": selectedFood!['type'] ?? "Food",
                 "food_type": selectedFood!['food_type'] ?? "Fast Food",
                 "rate": selectedFood!['rate'] ?? "4.9",
-              });
+              };
+              if (widget.offer != null) {
+                await DBHelper.instance.updateOffer(widget.offer!['id'], data);
+              } else {
+                await DBHelper.instance.insertOffer(data);
+              }
               if (mounted) {
                 Navigator.pop(context);
                 widget.onSave();
