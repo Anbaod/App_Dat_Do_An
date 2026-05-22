@@ -12,11 +12,9 @@ class AboutUsView extends StatefulWidget {
 
 class _AboutUsViewState extends State<AboutUsView> {
   List aboutTextArr = [
-    "Chào mừng bạn đến với FastFood, ứng dụng đặt đồ ăn nhanh hàng đầu tại Việt Nam, mang đến cho bạn hàng nghìn lựa chọn món ăn ngon từ burger, pizza, mì ý cho đến đồ uống mát lạnh và đồ tráng miệng ngọt ngào.",
-    "Chúng tôi cam kết cung cấp dịch vụ đặt món nhanh chóng, giao hàng siêu tốc trong vòng 30 phút để đảm bảo món ăn luôn nóng hổi và giữ trọn hương vị tươi ngon khi đến tay khách hàng.",
-    "Mỗi nhà hàng và món ăn trên hệ thống đều được tuyển chọn kỹ lưỡng, đảm bảo quy trình vệ sinh an toàn thực phẩm khắt khe và chất lượng nguyên liệu đạt chuẩn cao nhất.",
-    "Với giao diện thân thiện, tính năng thông minh giúp tìm kiếm món ăn dễ dàng cùng hàng loạt chương trình ưu đãi hấp dẫn, FastFood sẽ mang đến cho bạn trải nghiệm ẩm thực trọn vẹn và tuyệt vời.",
-    "Đội ngũ hỗ trợ khách hàng của chúng tôi luôn sẵn sàng phục vụ 24/7 để giải quyết nhanh chóng mọi thắc mắc và đảm bảo sự hài lòng tuyệt đối của bạn trong mỗi chuyến hành trình ẩm thực.",
+    "Sứ mệnh của chúng tôi là mang đến cho bạn những bữa ăn ngon miệng, nóng hổi và chất lượng nhất mọi lúc mọi nơi.",
+    "Cam kết an toàn thực phẩm tuyệt đối, với nguồn nguyên liệu sạch được chọn lọc kỹ càng từ các nhà cung cấp uy tín.",
+    "Tốc độ giao hàng siêu tốc, đội ngũ shipper thân thiện, chuyên nghiệp đảm bảo món ăn đến tay bạn luôn trong trạng thái tốt nhất."
   ];
 
   @override

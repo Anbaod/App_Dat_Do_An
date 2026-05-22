@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_textfield.dart';
-import 'package:food_delivery/database/db_helper.dart';
 
 import '../../common_widget/menu_item_row.dart';
+import '../../database/db_helper.dart';
 import '../more/my_order_view.dart';
 import 'item_details_view.dart';
 
@@ -29,25 +29,26 @@ class _MenuItemsViewState extends State<MenuItemsView> {
   @override
   void initState() {
     super.initState();
-    loadFoods();
+    _loadData();
   }
 
-  Future<void> loadFoods() async {
-    final String category = widget.mObj["name"]?.toString() ?? "Food";
-    try {
-      final items = await DBHelper.instance.getFoodsByCategory(category);
-      setState(() {
-        categoryItems = items;
-        filteredItems = items;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      debugPrint("Lỗi tải thực đơn từ SQLite: $e");
-    }
+  Future<void> _loadData() async {
+    final String category = widget.mObj["name"]?.toString() ?? "Phở";
+    final db = await DBHelper.instance.database;
+    final allFoods = await db.query(
+      "foods",
+      where: "category = ?",
+      whereArgs: [category],
+    );
+
+    setState(() {
+      categoryItems = List<Map<String, dynamic>>.from(allFoods);
+      filteredItems = categoryItems;
+      isLoading = false;
+    });
   }
+
+  // Removed old initState
 
   void searchFood(String value) {
     setState(() {
@@ -82,125 +83,122 @@ class _MenuItemsViewState extends State<MenuItemsView> {
 
     return Scaffold(
       backgroundColor: TColor.white,
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Column(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            children: [
+              const SizedBox(height: 46),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
                   children: [
-                    const SizedBox(height: 46),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            icon: Image.asset(
-                              "assets/img/btn_back.png",
-                              width: 20,
-                              height: 20,
-                            ),
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          Expanded(
-                            child: Text(
-                              title,
-                              style: TextStyle(
-                                color: TColor.primaryText,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-
-                          IconButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const MyOrderView(),
-                                ),
-                              );
-                            },
-                            icon: Image.asset(
-                              "assets/img/shopping_cart.png",
-                              width: 25,
-                              height: 25,
-                            ),
-                          ),
-                        ],
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: Image.asset(
+                        "assets/img/btn_back.png",
+                        width: 20,
+                        height: 20,
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(width: 8),
 
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: RoundTextfield(
-                        hintText: "Tìm món ăn",
-                        controller: txtSearch,
-                        onChanged: searchFood,
-                        left: Container(
-                          alignment: Alignment.center,
-                          width: 30,
-                          child: Image.asset(
-                            "assets/img/search.png",
-                            width: 20,
-                            height: 20,
-                          ),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: TColor.primaryText,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 15),
-
-                    filteredItems.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.all(30),
-                            child: Text(
-                              "Không tìm thấy món ăn",
-                              style: TextStyle(
-                                color: TColor.secondaryText,
-                                fontSize: 15,
-                              ),
-                            ),
-                          )
-                        : ListView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: filteredItems.length,
-                            itemBuilder: (context, index) {
-                              var mObj = filteredItems[index];
-
-                              return MenuItemRow(
-                                mObj: mObj,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ItemDetailsView(
-                                        mObj: mObj,
-                                      ),
-                                    ),
-                                  ).then((_) {
-                                    // reload in case favorite status was toggled
-                                    loadFoods();
-                                  });
-                                },
-                              );
-                            },
+                    IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MyOrderView(),
                           ),
+                        );
+                      },
+                      icon: Image.asset(
+                        "assets/img/shopping_cart.png",
+                        width: 25,
+                        height: 25,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
+
+              const SizedBox(height: 20),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: RoundTextfield(
+                  hintText: "Tìm món ăn",
+                  controller: txtSearch,
+                  onChanged: searchFood,
+                  left: Container(
+                    alignment: Alignment.center,
+                    width: 30,
+                    child: Image.asset(
+                      "assets/img/search.png",
+                      width: 20,
+                      height: 20,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
+              isLoading
+                  ? const CircularProgressIndicator()
+                  : filteredItems.isEmpty
+                  ? Padding(
+                padding: const EdgeInsets.all(30),
+                child: Text(
+                  "Không tìm thấy món ăn",
+                  style: TextStyle(
+                    color: TColor.secondaryText,
+                    fontSize: 15,
+                  ),
+                ),
+              )
+                  : ListView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: filteredItems.length,
+                itemBuilder: (context, index) {
+                  var mObj = filteredItems[index];
+
+                  return MenuItemRow(
+                    mObj: mObj,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ItemDetailsView(
+                            mObj: mObj,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

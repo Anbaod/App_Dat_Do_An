@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:food_delivery/common_widget/round_icon_button.dart';
-import 'package:food_delivery/database/db_helper.dart';
 
 import '../../common/color_extension.dart';
+import '../../common/format_utils.dart';
+import '../../database/db_helper.dart';
 import '../more/my_order_view.dart';
 
 class ItemDetailsView extends StatefulWidget {
@@ -46,41 +47,21 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
         "Món ăn thơm ngon, được chuẩn bị từ nguyên liệu tươi và phù hợp cho mọi bữa ăn.";
 
     price = double.tryParse(widget.mObj["price"]?.toString() ?? "15") ?? 15;
-    checkIfFavorite();
-  }
-
-  Future<void> checkIfFavorite() async {
-    final status = await DBHelper.instance.isFavorite(name);
-    if (mounted) {
-      setState(() {
-        isFav = status;
-      });
-    }
   }
 
   void addToCart() async {
-    try {
-      await DBHelper.instance.insertCart(
-        name: name,
-        image: image,
-        price: price,
-        qty: qty,
+    await DBHelper.instance.insertCart(
+      name: name,
+      image: image,
+      price: price,
+      qty: qty,
+    );
+    if(mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Đã thêm $qty x $name vào giỏ hàng"),
+        ),
       );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Đã thêm $qty x $name vào giỏ hàng"),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Có lỗi xảy ra: $e"),
-          ),
-        );
-      }
     }
   }
 
@@ -208,7 +189,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                       const SizedBox(height: 4),
 
                                       Text(
-                                        "$rate Star Ratings",
+                                        "$rate sao",
                                         style: TextStyle(
                                           color: TColor.primary,
                                           fontSize: 11,
@@ -222,7 +203,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        "\$${price.toStringAsFixed(2)}",
+                                        "${price.toStringAsFixed(0)} VNĐ",
                                         style: TextStyle(
                                           color: TColor.primaryText,
                                           fontSize: 31,
@@ -563,7 +544,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                                               const SizedBox(height: 15),
 
                                               Text(
-                                                "\$${(price * qty).toStringAsFixed(2)}",
+                                                FormatUtils.formatVND(price * qty),
                                                 style: TextStyle(
                                                   color: TColor.primaryText,
                                                   fontSize: 21,
@@ -643,37 +624,10 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                     alignment: Alignment.bottomRight,
                     margin: const EdgeInsets.only(right: 4),
                     child: InkWell(
-                      onTap: () async {
-                        try {
-                          if (isFav) {
-                            await DBHelper.instance.deleteFavoriteByName(name);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Đã xóa khỏi danh sách yêu thích")),
-                              );
-                            }
-                          } else {
-                            await DBHelper.instance.insertFavorite(
-                              name: name,
-                              image: image,
-                              price: price,
-                            );
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Đã thêm vào danh sách yêu thích")),
-                              );
-                            }
-                          }
-                          setState(() {
-                            isFav = !isFav;
-                          });
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Lỗi yêu thích: $e")),
-                            );
-                          }
-                        }
+                      onTap: () {
+                        setState(() {
+                          isFav = !isFav;
+                        });
                       },
                       child: Image.asset(
                         isFav

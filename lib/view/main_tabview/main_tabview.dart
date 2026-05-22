@@ -61,7 +61,7 @@ class _MainTabViewState extends State<MainTabView> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               TabButton(
-                  title: "Menu",
+                  title: "Thực đơn",
                   icon: "assets/img/tab_menu.png",
                   onTap: () {
                     if (selctTab != 0) {
@@ -74,7 +74,7 @@ class _MainTabViewState extends State<MainTabView> {
                   },
                   isSelected: selctTab == 0),
               TabButton(
-                  title: "Offer",
+                  title: "Ưu đãi",
                   icon: "assets/img/tab_offer.png",
                   onTap: () {
                     if (selctTab != 1) {
@@ -91,7 +91,7 @@ class _MainTabViewState extends State<MainTabView> {
                 const  SizedBox(width: 40, height: 40, ),
         
               TabButton(
-                  title: "Profile",
+                  title: "Tài khoản",
                   icon: "assets/img/tab_profile.png",
                   onTap: () {
                     if (selctTab != 3) {
@@ -104,7 +104,7 @@ class _MainTabViewState extends State<MainTabView> {
                   },
                   isSelected: selctTab == 3),
               TabButton(
-                  title: "More",
+                  title: "Khác",
                   icon: "assets/img/tab_more.png",
                   onTap: () {
                     if (selctTab != 4) {

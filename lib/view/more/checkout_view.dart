@@ -1,13 +1,19 @@
+import '../../common/color_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:food_delivery/common/color_extension.dart';
-import 'package:food_delivery/common_widget/round_button.dart';
-
+import '../../common/format_utils.dart';
+import '../../common/globs.dart';
+import '../../common/service_call.dart';
+import '../../common_widget/round_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../database/db_helper.dart';
 import 'change_address_view.dart';
 import 'checkout_message_view.dart';
 
 class CheckoutView extends StatefulWidget {
-  const CheckoutView({super.key});
+  final List<Map<String, dynamic>> cartItems;
+  final double subTotal;
+
+  const CheckoutView({super.key, required this.cartItems, required this.subTotal});
 
   @override
   State<CheckoutView> createState() => _CheckoutViewState();
@@ -21,42 +27,15 @@ class _CheckoutViewState extends State<CheckoutView> {
   ];
 
   int selectMethod = -1;
+
   String deliveryAddress = "Thủ Dầu Một\nBình Dương, Việt Nam";
 
-  List<Map<String, dynamic>> cartItems = [];
-  bool isLoading = true;
+  double deliveryCost = 20000.0;
+  double discount = 0.0;
 
-  double subTotal = 0;
-  double deliveryCost = 0;
-  double discount = 0;
+  double get subTotal => widget.subTotal;
 
-  double get total => (subTotal + deliveryCost - discount).clamp(0.0, double.infinity);
-
-  @override
-  void initState() {
-    super.initState();
-    loadCart();
-  }
-
-  Future<void> loadCart() async {
-    setState(() {
-      isLoading = true;
-    });
-    final items = await DBHelper.instance.getCart();
-    double sum = 0;
-    for (var item in items) {
-      double price = double.tryParse(item["price"]?.toString() ?? "0") ?? 0;
-      int qty = int.tryParse(item["qty"]?.toString() ?? "1") ?? 1;
-      sum += price * qty;
-    }
-    setState(() {
-      cartItems = items;
-      subTotal = sum;
-      deliveryCost = items.isEmpty ? 0.0 : 2.0;
-      discount = items.isEmpty ? 0.0 : 4.0;
-      isLoading = false;
-    });
-  }
+  double get total => subTotal + deliveryCost - discount;
 
   Future<void> _changeAddress() async {
     var result = await Navigator.push(
@@ -83,296 +62,290 @@ class _CheckoutViewState extends State<CheckoutView> {
       return;
     }
 
-    if (cartItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Giỏ hàng của bạn trống, không thể thanh toán"),
-        ),
-      );
-      return;
-    }
-
-    try {
-      final orderId = await DBHelper.instance.insertOrderWithItems(
-        address: deliveryAddress,
-        paymentMethod: paymentArr[selectMethod]["name"],
-        total: total,
-        items: cartItems,
-      );
-
-      // Thêm thông báo đặt hàng thành công vào SQLite
-      await DBHelper.instance.insertNotification(
-        title: "Đặt hàng thành công",
-        message: "Đơn hàng #$orderId trị giá \$${total.toStringAsFixed(2)} đã được tiếp nhận và đang xử lý.",
-      );
-
-      // Xóa giỏ hàng sau khi đặt hàng thành công
-      await DBHelper.instance.clearCart();
-
-      if (mounted) {
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          isScrollControlled: true,
-          builder: (context) {
-            return const CheckoutMessageView();
-          },
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Đã xảy ra lỗi: $e"),
-          ),
-        );
+    await DBHelper.instance.insertOrderWithItems(
+      address: deliveryAddress,
+      paymentMethod: paymentArr[selectMethod]["name"],
+      total: total,
+      items: widget.cartItems,
+    );
+    // Save used offers
+    final prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt("current_user_id") ?? 0;
+    
+    if (userId > 0) {
+      final db = await DBHelper.instance.database;
+      final allOffers = await db.query("offers");
+      for (var cartItem in widget.cartItems) {
+        // Find if this item matches any offer name
+        for (var offer in allOffers) {
+          if (cartItem["name"].toString().contains(offer["name"].toString())) {
+            // Record this offer as used for the user
+            await DBHelper.instance.insertUsedOffer(userId, offer["id"] as int);
+          }
+        }
       }
     }
+
+    // Clear cart after successful order
+    await DBHelper.instance.clearCart();
+
+    // Insert Notification
+    await DBHelper.instance.insertNotification(
+      title: "Đơn hàng của bạn đã được nhận",
+      message: "Đơn hàng tới địa chỉ $deliveryAddress đang được xử lý.",
+    );
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return const CheckoutMessageView();
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: TColor.white,
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 46),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: Row(
                   children: [
-                    const SizedBox(height: 46),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            icon: Image.asset(
-                              "assets/img/btn_back.png",
-                              width: 20,
-                              height: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              "Thanh toán",
-                              style: TextStyle(
-                                color: TColor.primaryText,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: Image.asset(
+                        "assets/img/btn_back.png",
+                        width: 20,
+                        height: 20,
                       ),
                     ),
-
-                    Padding(
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Địa chỉ giao hàng",
-                            style: TextStyle(
-                              color: TColor.secondaryText,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  deliveryAddress,
-                                  style: TextStyle(
-                                    color: TColor.primaryText,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: _changeAddress,
-                                child: Text(
-                                  "Thay đổi",
-                                  style: TextStyle(
-                                    color: TColor.primary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Container(
-                      decoration: BoxDecoration(color: TColor.textfield),
-                      height: 8,
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 25),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Phương thức thanh toán",
-                                style: TextStyle(
-                                  color: TColor.secondaryText,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              TextButton.icon(
-                                onPressed: () {},
-                                icon: Icon(Icons.add, color: TColor.primary),
-                                label: Text(
-                                  "Thêm thẻ",
-                                  style: TextStyle(
-                                    color: TColor.primary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          ListView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            itemCount: paymentArr.length,
-                            itemBuilder: (context, index) {
-                              var pObj = paymentArr[index];
-
-                              return InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    selectMethod = index;
-                                  });
-                                },
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(vertical: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                    horizontal: 15,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: TColor.textfield,
-                                    borderRadius: BorderRadius.circular(5),
-                                    border: Border.all(
-                                      color: TColor.secondaryText.withOpacity(0.2),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Image.asset(
-                                        pObj["icon"].toString(),
-                                        width: 50,
-                                        height: 20,
-                                        fit: BoxFit.contain,
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          pObj["name"].toString(),
-                                          style: TextStyle(
-                                            color: TColor.primaryText,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                      Icon(
-                                        selectMethod == index
-                                            ? Icons.radio_button_on
-                                            : Icons.radio_button_off,
-                                        color: TColor.primary,
-                                        size: 18,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Container(
-                      decoration: BoxDecoration(color: TColor.textfield),
-                      height: 8,
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 25),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 15),
-
-                          _buildPriceRow("Tạm tính", "\$${subTotal.toStringAsFixed(2)}"),
-                          const SizedBox(height: 8),
-
-                          _buildPriceRow(
-                              "Phí giao hàng", "\$${deliveryCost.toStringAsFixed(2)}"),
-                          const SizedBox(height: 8),
-
-                          _buildPriceRow("Giảm giá", "-\$${discount.toStringAsFixed(2)}"),
-                          const SizedBox(height: 15),
-
-                          Divider(
-                            color: TColor.secondaryText.withOpacity(0.5),
-                            height: 1,
-                          ),
-
-                          const SizedBox(height: 15),
-
-                          _buildPriceRow(
-                            "Tổng cộng",
-                            "\$${total.toStringAsFixed(2)}",
-                            isTotal: true,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Container(
-                      decoration: BoxDecoration(color: TColor.textfield),
-                      height: 8,
-                    ),
-
-                    Padding(
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
-                      child: RoundButton(
-                        title: "Đặt hàng",
-                        onPressed: _sendOrder,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Thanh toán",
+                        style: TextStyle(
+                          color: TColor.primaryText,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
+
+              Padding(
+                padding:
+                const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Địa chỉ giao hàng",
+                      style: TextStyle(
+                        color: TColor.secondaryText,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            deliveryAddress,
+                            style: TextStyle(
+                              color: TColor.primaryText,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _changeAddress,
+                          child: Text(
+                            "Thay đổi",
+                            style: TextStyle(
+                              color: TColor.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Container(
+                decoration: BoxDecoration(color: TColor.textfield),
+                height: 8,
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Phương thức thanh toán",
+                          style: TextStyle(
+                            color: TColor.secondaryText,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {},
+                          icon: Icon(Icons.add, color: TColor.primary),
+                          label: Text(
+                            "Thêm thẻ",
+                            style: TextStyle(
+                              color: TColor.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: paymentArr.length,
+                      itemBuilder: (context, index) {
+                        var pObj = paymentArr[index];
+
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              selectMethod = index;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 15,
+                            ),
+                            decoration: BoxDecoration(
+                              color: TColor.textfield,
+                              borderRadius: BorderRadius.circular(5),
+                              border: Border.all(
+                                color: TColor.secondaryText.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Image.asset(
+                                  pObj["icon"].toString(),
+                                  width: 50,
+                                  height: 20,
+                                  fit: BoxFit.contain,
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    pObj["name"].toString(),
+                                    style: TextStyle(
+                                      color: TColor.primaryText,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  selectMethod == index
+                                      ? Icons.radio_button_on
+                                      : Icons.radio_button_off,
+                                  color: TColor.primary,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Container(
+                decoration: BoxDecoration(color: TColor.textfield),
+                height: 8,
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 15),
+
+                    _buildPriceRow("Tạm tính", "${subTotal.toStringAsFixed(0)} VNĐ"),
+                    const SizedBox(height: 8),
+
+                    _buildPriceRow(
+                        "Phí giao hàng", "${deliveryCost.toStringAsFixed(0)} VNĐ"),
+                    const SizedBox(height: 8),
+
+                    _buildPriceRow("Giảm giá", "-${discount.toStringAsFixed(0)} VNĐ"),
+                    const SizedBox(height: 15),
+
+                    Divider(
+                      color: TColor.secondaryText.withOpacity(0.5),
+                      height: 1,
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    _buildPriceRow(
+                      "Tổng cộng",
+                      "${total.toStringAsFixed(0)} VNĐ",
+                      isTotal: true,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Container(
+                decoration: BoxDecoration(color: TColor.textfield),
+                height: 8,
+              ),
+
+              Padding(
+                padding:
+                const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
+                child: RoundButton(
+                  title: "Đặt hàng",
+                  onPressed: _sendOrder,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -3,14 +3,14 @@ import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/view/more/review_order_view.dart';
 import '../../database/db_helper.dart';
 
-class OrderHistoryView extends StatefulWidget {
-  const OrderHistoryView({super.key});
+class MyPendingOrdersView extends StatefulWidget {
+  const MyPendingOrdersView({super.key});
 
   @override
-  State<OrderHistoryView> createState() => _OrderHistoryViewState();
+  State<MyPendingOrdersView> createState() => _MyPendingOrdersViewState();
 }
 
-class _OrderHistoryViewState extends State<OrderHistoryView> {
+class _MyPendingOrdersViewState extends State<MyPendingOrdersView> {
   List<Map<String, dynamic>> orders = [];
   bool isLoading = true;
 
@@ -22,7 +22,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
 
   Future<void> loadOrders() async {
     final allOrders = await DBHelper.instance.getOrders();
-    orders = allOrders.where((o) => o["status"] == "Thành công" || o["status"] == "Đã hủy").toList();
+    orders = allOrders.where((o) => o["status"] != "Thành công" && o["status"] != "Đã hủy").toList();
 
     setState(() {
       isLoading = false;
@@ -52,7 +52,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
           ),
         ),
         title: Text(
-          "Lịch sử đơn hàng",
+          "Đơn hàng của tôi",
           style: TextStyle(
             color: TColor.primaryText,
             fontSize: 20,
@@ -154,29 +154,6 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    if (order["status"] == "Thành công" && order["is_reviewed"] == 0)
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ReviewOrderView(orderId: order["id"]),
-                            ),
-                          );
-                          loadOrders();
-                        },
-                        icon: const Icon(Icons.star, color: Colors.white, size: 18),
-                        label: const Text("Đánh giá"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    if (order["status"] == "Thành công" && order["is_reviewed"] == 1)
-                      const Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Text("Đã đánh giá", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                      ),
                     const Spacer(),
                     TextButton.icon(
                       onPressed: () {

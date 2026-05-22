@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
 
 import '../../common/color_extension.dart';
 import '../../common_widget/round_textfield.dart';
 import '../more/my_order_view.dart';
+import 'package:food_delivery/database/db_helper.dart';
 import 'menu_items_view.dart';
-import '../../database/db_helper.dart';
 
 class MenuView extends StatefulWidget {
   const MenuView({super.key});
@@ -17,65 +16,36 @@ class MenuView extends StatefulWidget {
 class _MenuViewState extends State<MenuView> {
   TextEditingController txtSearch = TextEditingController();
 
-  List<Map<String, dynamic>> menuArr = [
-    {
-      "name": "Food",
-      "image": "assets/img/menu_1.png",
-      "items_count": "0",
-    },
-    {
-      "name": "Beverages",
-      "image": "assets/img/menu_2.png",
-      "items_count": "0",
-    },
-    {
-      "name": "Desserts",
-      "image": "assets/img/menu_3.png",
-      "items_count": "0",
-    },
-    {
-      "name": "Promotions",
-      "image": "assets/img/menu_4.png",
-      "items_count": "0",
-    },
-  ];
-
+  List<Map<String, dynamic>> menuArr = [];
   List<Map<String, dynamic>> filteredMenu = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    filteredMenu = menuArr;
-    loadCategoryCounts();
+    _loadCategories();
   }
 
-  Future<void> loadCategoryCounts() async {
-    try {
-      final List<Map<String, dynamic>> updatedMenu = [];
-      for (var item in menuArr) {
-        final categoryName = item["name"].toString();
-        final db = await DBHelper.instance.database;
-        final countResult = Sqflite.firstIntValue(
-          await db.rawQuery("SELECT COUNT(*) FROM foods WHERE category = ?", [categoryName]),
-        ) ?? 0;
+  Future<void> _loadCategories() async {
+    final categories = await DBHelper.instance.getCategories();
+    final db = await DBHelper.instance.database;
+    final allFoods = await db.query("foods");
 
-        final Map<String, dynamic> updatedItem = Map<String, dynamic>.from(item);
-        updatedItem["items_count"] = countResult.toString();
-        updatedMenu.add(updatedItem);
-      }
-
-      setState(() {
-        menuArr = updatedMenu;
-        searchMenu(txtSearch.text);
-        isLoading = false;
-      });
-    } catch (e) {
-      debugPrint("Error loading category counts: $e");
-      setState(() {
-        isLoading = false;
+    List<Map<String, dynamic>> updatedCategories = [];
+    for (var cat in categories) {
+      int count = allFoods.where((f) => f['category'] == cat['name']).length;
+      updatedCategories.add({
+        "name": cat['name'],
+        "image": cat['image'] ?? "assets/img/menu_1.png",
+        "items_count": count.toString(),
       });
     }
+
+    setState(() {
+      menuArr = updatedCategories;
+      filteredMenu = menuArr;
+      isLoading = false;
+    });
   }
 
   void searchMenu(String value) {
@@ -185,140 +155,138 @@ class _MenuViewState extends State<MenuView> {
 
                   isLoading
                       ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 40),
-                          child: Center(child: CircularProgressIndicator()),
+                          padding: EdgeInsets.all(30),
+                          child: CircularProgressIndicator(),
                         )
                       : filteredMenu.isEmpty
-                          ? Padding(
-                        padding: const EdgeInsets.all(30),
-                        child: Text(
-                          "Không tìm thấy danh mục",
-                          style: TextStyle(
-                            color: TColor.secondaryText,
-                            fontSize: 15,
-                          ),
-                        ),
-                      )
-                          : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 30,
-                          horizontal: 20,
-                        ),
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: filteredMenu.length,
-                        itemBuilder: (context, index) {
-                          var mObj = filteredMenu[index];
+                      ? Padding(
+                    padding: const EdgeInsets.all(30),
+                    child: Text(
+                      "Không tìm thấy danh mục",
+                      style: TextStyle(
+                        color: TColor.secondaryText,
+                        fontSize: 15,
+                      ),
+                    ),
+                  )
+                      : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 30,
+                      horizontal: 20,
+                    ),
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: filteredMenu.length,
+                    itemBuilder: (context, index) {
+                      var mObj = filteredMenu[index];
 
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => MenuItemsView(
-                                    mObj: mObj,
-                                  ),
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MenuItemsView(
+                                mObj: mObj,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Stack(
+                          alignment: Alignment.centerRight,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(
+                                top: 8,
+                                bottom: 8,
+                                right: 20,
+                              ),
+                              width: media.width - 100,
+                              height: 90,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(25),
+                                  bottomLeft: Radius.circular(25),
+                                  topRight: Radius.circular(10),
+                                  bottomRight: Radius.circular(10),
                                 ),
-                              ).then((_) {
-                                loadCategoryCounts();
-                              });
-                            },
-                            child: Stack(
-                              alignment: Alignment.centerRight,
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(
-                                    top: 8,
-                                    bottom: 8,
-                                    right: 20,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 7,
+                                    offset: Offset(0, 4),
                                   ),
-                                  width: media.width - 100,
-                                  height: 90,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(25),
-                                      bottomLeft: Radius.circular(25),
-                                      topRight: Radius.circular(10),
-                                      bottomRight: Radius.circular(10),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 7,
-                                        offset: Offset(0, 4),
+                                ],
+                              ),
+                            ),
+
+                            Row(
+                              children: [
+                                Image.asset(
+                                  mObj["image"].toString(),
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.contain,
+                                ),
+
+                                const SizedBox(width: 15),
+
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        mObj["name"].toString(),
+                                        style: TextStyle(
+                                          color: TColor.primaryText,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 4),
+
+                                      Text(
+                                        "${mObj["items_count"]} món",
+                                        style: TextStyle(
+                                          color: TColor.secondaryText,
+                                          fontSize: 11,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
 
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                      mObj["image"].toString(),
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.contain,
-                                    ),
-
-                                    const SizedBox(width: 15),
-
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            mObj["name"].toString(),
-                                            style: TextStyle(
-                                              color: TColor.primaryText,
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-
-                                          const SizedBox(height: 4),
-
-                                          Text(
-                                            "${mObj["items_count"]} món",
-                                            style: TextStyle(
-                                              color: TColor.secondaryText,
-                                              fontSize: 11,
-                                            ),
-                                          ),
-                                        ],
+                                Container(
+                                  width: 35,
+                                  height: 35,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius:
+                                    BorderRadius.circular(17.5),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
                                       ),
-                                    ),
-
-                                    Container(
-                                      width: 35,
-                                      height: 35,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius:
-                                        BorderRadius.circular(17.5),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Colors.black12,
-                                            blurRadius: 4,
-                                            offset: Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Image.asset(
-                                        "assets/img/btn_next.png",
-                                        width: 15,
-                                        height: 15,
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Image.asset(
+                                    "assets/img/btn_next.png",
+                                    width: 15,
+                                    height: 15,
+                                  ),
                                 ),
                               ],
                             ),
-                          );
-                        },
-                      ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

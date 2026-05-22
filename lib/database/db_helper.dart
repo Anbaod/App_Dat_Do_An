@@ -8,11 +8,13 @@ class DBHelper {
 
   DBHelper._init();
 
+  static const _databaseName = "food_delivery_v5.db";
+  static const _databaseVersion = 5;
+
   Future<Database> get database async {
     if (_database != null) return _database!;
 
-    _database = await _initDB("food_delivery.db");
-    await _seedFoodsIfEmpty(_database!);
+    _database = await _initDB(_databaseName);
     return _database!;
   }
 
@@ -22,273 +24,10 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 8,
+      version: _databaseVersion,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
-  }
-
-  Future<void> _seedFoodsIfEmpty(Database db) async {
-    final countResult = Sqflite.firstIntValue(
-      await db.rawQuery("SELECT COUNT(*) FROM foods"),
-    );
-    if (countResult == 0) {
-      final List<Map<String, dynamic>> defaultFoods = [
-        // --- FOOD ---
-        {
-          "category": "Food",
-          "image": "assets/img/menu_1.png",
-          "name": "Beef Burger",
-          "rate": "4.9",
-          "rating": "124",
-          "type": "King Burgers",
-          "food_type": "Fast Food",
-          "price": 16.0,
-          "description": "Burger bò thơm ngon với phô mai, rau tươi và sốt đặc biệt.",
-        },
-        {
-          "category": "Food",
-          "image": "assets/img/menu_2.png",
-          "name": "Classic Burger",
-          "rate": "4.8",
-          "rating": "98",
-          "type": "King Burgers",
-          "food_type": "Fast Food",
-          "price": 14.0,
-          "description": "Burger truyền thống dễ ăn, phù hợp cho mọi bữa ăn.",
-        },
-        {
-          "category": "Food",
-          "image": "assets/img/menu_3.png",
-          "name": "Pizza Hải Sản",
-          "rate": "4.7",
-          "rating": "102",
-          "type": "Pizza House",
-          "food_type": "Pizza",
-          "price": 22.0,
-          "description": "Pizza hải sản với tôm, mực, phô mai và sốt cà chua.",
-        },
-        {
-          "category": "Food",
-          "image": "assets/img/menu_1.png",
-          "name": "Mì Ý Bò Bằm",
-          "rate": "4.7",
-          "rating": "102",
-          "type": "Pasta Italian",
-          "food_type": "Western Food",
-          "price": 18.0,
-          "description": "Mì Ý xốt bò bằm đậm đà chuẩn vị Ý.",
-        },
-        {
-          "category": "Food",
-          "image": "assets/img/menu_2.png",
-          "name": "Gà Rán Giòn Cay",
-          "rate": "4.6",
-          "rating": "89",
-          "type": "Crispy Chicken",
-          "food_type": "Fast Food",
-          "price": 13.0,
-          "description": "Gà rán giòn rụm, vị cay nồng đậm đà hấp dẫn.",
-        },
-        {
-          "category": "Food",
-          "image": "assets/img/menu_3.png",
-          "name": "Cơm Gà Xối Mỡ",
-          "rate": "4.6",
-          "rating": "118",
-          "type": "Rice House",
-          "food_type": "Vietnamese Food",
-          "price": 12.0,
-          "description": "Cơm chiên tơi xốp kèm đùi gà chiên da giòn rụm béo ngậy.",
-        },
-        {
-          "category": "Food",
-          "image": "assets/img/menu_2.png",
-          "name": "Bánh Mì Thịt Nướng",
-          "rate": "4.7",
-          "rating": "130",
-          "type": "Banh Mi VN",
-          "food_type": "Street Food",
-          "price": 7.0,
-          "description": "Bánh mì Việt Nam giòn tan nhân thịt nướng thơm lừng kèm rau chua.",
-        },
-
-        // --- BEVERAGES ---
-        {
-          "category": "Beverages",
-          "image": "assets/img/offer_1.png",
-          "name": "Cà Phê Sữa Đá",
-          "rate": "4.9",
-          "rating": "200",
-          "type": "Cafe Việt",
-          "food_type": "Beverages",
-          "price": 5.0,
-          "description": "Cà phê sữa đá đậm vị Việt Nam, thơm béo và tỉnh táo.",
-        },
-        {
-          "category": "Beverages",
-          "image": "assets/img/dess_3.png",
-          "name": "Street Shake",
-          "rate": "4.7",
-          "rating": "86",
-          "type": "Café Racer",
-          "food_type": "Beverages",
-          "price": 10.0,
-          "description": "Đồ uống mát lạnh, béo nhẹ, thích hợp dùng kèm đồ ăn nhanh.",
-        },
-        {
-          "category": "Beverages",
-          "image": "assets/img/menu_3.png",
-          "name": "Trà Sữa Trân Châu",
-          "rate": "4.9",
-          "rating": "210",
-          "type": "Milk Tea",
-          "food_type": "Drink",
-          "price": 5.0,
-          "description": "Trà sữa trân châu ngọt dịu, thơm béo và dễ uống.",
-        },
-        {
-          "category": "Beverages",
-          "image": "assets/img/offer_2.png",
-          "name": "Nước Ép Cam Tươi",
-          "rate": "4.8",
-          "rating": "95",
-          "type": "Fresh Juice",
-          "food_type": "Drink",
-          "price": 6.0,
-          "description": "Nước ép cam nguyên chất 100%, giàu Vitamin C tự nhiên.",
-        },
-        {
-          "category": "Beverages",
-          "image": "assets/img/offer_3.png",
-          "name": "Trà Đào Sả Đá",
-          "rate": "4.7",
-          "rating": "112",
-          "type": "Tea House",
-          "food_type": "Drink",
-          "price": 5.5,
-          "description": "Trà đào thơm ngát kết hợp sả tươi và miếng đào giòn ngọt.",
-        },
-
-        // --- DESSERTS ---
-        {
-          "category": "Desserts",
-          "image": "assets/img/dess_1.png",
-          "name": "French Apple Pie",
-          "rate": "4.9",
-          "rating": "124",
-          "type": "Minute by tuk tuk",
-          "food_type": "Desserts",
-          "price": 15.0,
-          "description": "Bánh táo thơm ngon, lớp vỏ giòn nhẹ và nhân táo ngọt dịu.",
-        },
-        {
-          "category": "Desserts",
-          "image": "assets/img/dess_2.png",
-          "name": "Dark Chocolate Cake",
-          "rate": "4.8",
-          "rating": "98",
-          "type": "Cakes by Tella",
-          "food_type": "Desserts",
-          "price": 18.0,
-          "description": "Bánh socola đậm vị, mềm mịn và hấp dẫn.",
-        },
-        {
-          "category": "Desserts",
-          "image": "assets/img/dess_4.png",
-          "name": "Fudgy Chewy Brownies",
-          "rate": "4.9",
-          "rating": "124",
-          "type": "Minute by tuk tuk",
-          "food_type": "Desserts",
-          "price": 16.0,
-          "description": "Brownies mềm dẻo, thơm mùi socola và ngọt hài hòa.",
-        },
-        {
-          "category": "Desserts",
-          "image": "assets/img/dess_1.png",
-          "name": "Strawberry Mousse",
-          "rate": "4.8",
-          "rating": "75",
-          "type": "Sweet Bakery",
-          "food_type": "Desserts",
-          "price": 12.0,
-          "description": "Bánh mousse dâu tây ngọt mát, mềm mịn tan trong miệng.",
-        },
-        {
-          "category": "Desserts",
-          "image": "assets/img/dess_2.png",
-          "name": "Tiramisu Cake",
-          "rate": "4.9",
-          "rating": "92",
-          "type": "Italian Bakery",
-          "food_type": "Desserts",
-          "price": 14.5,
-          "description": "Bánh tiramisu béo ngậy, đượm hương cà phê và rượu nhẹ nồng nàn.",
-        },
-
-        // --- PROMOTIONS ---
-        {
-          "category": "Promotions",
-          "image": "assets/img/offer_1.png",
-          "name": "Café de Noires",
-          "rate": "4.9",
-          "rating": "124",
-          "type": "Cafe",
-          "food_type": "Western Food",
-          "price": 12.0,
-          "description": "Ưu đãi đặc biệt cho đồ uống và món ăn nhẹ.",
-        },
-        {
-          "category": "Promotions",
-          "image": "assets/img/offer_2.png",
-          "name": "Isso",
-          "rate": "4.8",
-          "rating": "98",
-          "type": "Cafe",
-          "food_type": "Fast Food",
-          "price": 10.0,
-          "description": "Khuyến mãi mua 1 tặng 1 trong hôm nay.",
-        },
-        {
-          "category": "Promotions",
-          "image": "assets/img/offer_3.png",
-          "name": "Cafe Beans",
-          "rate": "4.7",
-          "rating": "86",
-          "type": "Cafe",
-          "food_type": "Coffee",
-          "price": 8.0,
-          "description": "Miễn phí giao hàng cho đơn từ 50.000đ.",
-        },
-        {
-          "category": "Promotions",
-          "image": "assets/img/menu_1.png",
-          "name": "Combo Burger & Pepsi",
-          "rate": "4.9",
-          "rating": "115",
-          "type": "King Combo",
-          "food_type": "Fast Food",
-          "price": 18.5,
-          "description": "Combo Beef Burger và nước ngọt Pepsi mát lạnh.",
-        },
-        {
-          "category": "Promotions",
-          "image": "assets/img/menu_2.png",
-          "name": "Combo Gà Rán Gia Đình",
-          "rate": "4.8",
-          "rating": "142",
-          "type": "Family Combo",
-          "food_type": "Fried Food",
-          "price": 29.0,
-          "description": "Combo 4 miếng gà rán giòn cay, khoai tây chiên cỡ lớn.",
-        }
-      ];
-
-      for (var food in defaultFoods) {
-        await db.insert("foods", food);
-      }
-    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -327,6 +66,7 @@ class DBHelper {
         payment_method TEXT NOT NULL,
         total REAL NOT NULL,
         status TEXT NOT NULL,
+        is_reviewed INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       )
     ''');
@@ -371,7 +111,54 @@ class DBHelper {
       )
     ''');
 
-    // Tạo tài khoản admin mặc định
+    await db.execute('''
+      CREATE TABLE categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        image TEXT,
+        created_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE offers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        image TEXT NOT NULL,
+        discount TEXT NOT NULL,
+        price REAL DEFAULT 0.0,
+        type TEXT,
+        food_type TEXT,
+        rate TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE user_used_offers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        offer_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER NOT NULL,
+        user_email TEXT NOT NULL,
+        rating INTEGER NOT NULL,
+        comment TEXT,
+        is_hidden INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await _seedCategories(db);
+    await _seedFoods(db);
+
+    // Seed admin user
     await db.insert(
       "users",
       {
@@ -499,55 +286,204 @@ class DBHelper {
 
     if (oldVersion < 6) {
       try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            user_email TEXT NOT NULL,
+            rating INTEGER NOT NULL,
+            comment TEXT,
+            is_hidden INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+          )
+        ''');
         await db.execute(
-          "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'",
+          "ALTER TABLE orders ADD COLUMN is_reviewed INTEGER NOT NULL DEFAULT 0",
         );
       } catch (_) {}
-
-      // Tạo tài khoản admin mặc định
-      await db.insert(
-        "users",
-        {
-          "name": "Admin",
-          "email": "admin@gmail.com",
-          "password": "123",
-          "phone": "",
-          "address": "",
-          "role": "admin",
-          "created_at": DateTime.now().toIso8601String(),
-        },
-        conflictAlgorithm: ConflictAlgorithm.ignore,
-      );
     }
 
     if (oldVersion < 7) {
       try {
-        await db.execute(
-          "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'",
-        );
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            image TEXT,
+            created_at TEXT
+          )
+        ''');
+        await _seedCategories(db);
+        await _seedFoods(db);
       } catch (_) {}
-
-      // Tạo tài khoản admin mặc định
-      await db.insert(
-        "users",
-        {
-          "name": "Admin",
-          "email": "admin@gmail.com",
-          "password": "123",
-          "phone": "",
-          "address": "",
-          "role": "admin",
-          "created_at": DateTime.now().toIso8601String(),
-        },
-        conflictAlgorithm: ConflictAlgorithm.ignore,
-      );
     }
 
     if (oldVersion < 8) {
       try {
-        await db.execute("DELETE FROM foods");
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS offers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            image TEXT NOT NULL,
+            discount TEXT NOT NULL,
+            price REAL DEFAULT 0.0,
+            type TEXT,
+            food_type TEXT,
+            rate TEXT,
+            created_at TEXT NOT NULL
+          )
+        ''');
       } catch (_) {}
-      await _seedFoodsIfEmpty(db);
+    }
+
+    if (oldVersion < 9) {
+      try {
+        await db.execute("ALTER TABLE offers ADD COLUMN price REAL DEFAULT 0.0");
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _seedCategories(Database db) async {
+    final categories = [
+      {"name": "Phở", "image": "assets/img/pho_bo.png"},
+      {"name": "Bánh Mì", "image": "assets/img/banh_mi.png"},
+      {"name": "Cơm", "image": "assets/img/com_tam.png"},
+      {"name": "Bún", "image": "assets/img/bun_cha.png"},
+    ];
+    for (var cat in categories) {
+      await db.insert("categories", {
+        "name": cat["name"],
+        "image": cat["image"],
+        "created_at": DateTime.now().toIso8601String(),
+      });
+    }
+  }
+
+  Future<void> _seedFoods(Database db) async {
+    final foods = [
+      {
+        "name": "Phở Bò Đặc Biệt",
+        "image": "assets/img/pho_bo.png",
+        "price": 55000.0,
+        "rate": "4.9",
+        "category": "Phở",
+        "description": "Phở bò nấu theo hương vị truyền thống, đậm đà.",
+        "food_type": "Món Nước",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Phở Gà Ta",
+        "image": "assets/img/pho_bo.png",
+        "price": 45000.0,
+        "rate": "4.7",
+        "category": "Phở",
+        "description": "Phở gà ta dai ngon, nước dùng thanh ngọt.",
+        "food_type": "Món Nước",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Phở Trộn Cuốn",
+        "image": "assets/img/pho_bo.png",
+        "price": 50000.0,
+        "rate": "4.8",
+        "category": "Phở",
+        "description": "Phở trộn chua ngọt, dễ ăn và chống ngán.",
+        "food_type": "Món Trộn",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bánh Mì Thịt Nướng",
+        "image": "assets/img/banh_mi.png",
+        "price": 25000.0,
+        "rate": "4.8",
+        "category": "Bánh Mì",
+        "description": "Bánh mì giòn rụm với thịt nướng thơm lừng.",
+        "food_type": "Ăn Nhanh",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bánh Mì Chả Lụa",
+        "image": "assets/img/banh_mi.png",
+        "price": 20000.0,
+        "rate": "4.6",
+        "category": "Bánh Mì",
+        "description": "Bánh mì truyền thống với chả lụa thủ công.",
+        "food_type": "Ăn Nhanh",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bánh Mì Heo Quay",
+        "image": "assets/img/banh_mi.png",
+        "price": 30000.0,
+        "rate": "4.9",
+        "category": "Bánh Mì",
+        "description": "Bánh mì heo quay da giòn rụm, béo ngậy.",
+        "food_type": "Ăn Nhanh",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Cơm Tấm Sườn Bì",
+        "image": "assets/img/com_tam.png",
+        "price": 45000.0,
+        "rate": "4.7",
+        "category": "Cơm",
+        "description": "Cơm tấm dẻo thơm, sườn nướng mềm ngọt.",
+        "food_type": "Món Cơm",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Cơm Tấm Chả Trứng",
+        "image": "assets/img/com_tam.png",
+        "price": 35000.0,
+        "rate": "4.5",
+        "category": "Cơm",
+        "description": "Cơm tấm với chả trứng hấp thơm lừng.",
+        "food_type": "Món Cơm",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Cơm Gà Xối Mỡ",
+        "image": "assets/img/com_tam.png",
+        "price": 40000.0,
+        "rate": "4.8",
+        "category": "Cơm",
+        "description": "Cơm gà xối mỡ da giòn rụm, thịt mọng nước.",
+        "food_type": "Món Cơm",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bún Chả Hà Nội",
+        "image": "assets/img/bun_cha.png",
+        "price": 50000.0,
+        "rate": "4.9",
+        "category": "Bún",
+        "description": "Bún chả chuẩn vị Hà Nội với thịt nướng than hoa.",
+        "food_type": "Món Nước",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bún Bò Huế",
+        "image": "assets/img/bun_cha.png",
+        "price": 55000.0,
+        "rate": "4.8",
+        "category": "Bún",
+        "description": "Bún bò đậm đà hương vị miền Trung.",
+        "food_type": "Món Nước",
+        "type": "Món Chính"
+      },
+      {
+        "name": "Bún Thịt Nướng",
+        "image": "assets/img/bun_cha.png",
+        "price": 40000.0,
+        "rate": "4.7",
+        "category": "Bún",
+        "description": "Bún thịt nướng với nước mắm chua ngọt đặc trưng.",
+        "food_type": "Món Trộn",
+        "type": "Món Chính"
+      },
+    ];
+    for (var food in foods) {
+      await db.insert("foods", food);
     }
   }
 
@@ -624,65 +560,6 @@ class DBHelper {
     );
   }
 
-  Future<int> updateUser({
-    required int id,
-    required String name,
-    required String email,
-    String phone = "",
-    String address = "",
-  }) async {
-    final db = await instance.database;
-
-    return await db.update(
-      "users",
-      {
-        "name": name,
-        "email": email,
-        "phone": phone,
-        "address": address,
-      },
-      where: "id = ?",
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> deleteUser(int id) async {
-    final db = await instance.database;
-
-    return await db.delete(
-      "users",
-      where: "id = ?",
-      whereArgs: [id],
-    );
-  }
-
-
-  Future<int> insertFood({
-    required String name,
-    required String image,
-    required double price,
-    String rate = "4.5",
-    String rating = "0",
-    String type = "Food",
-    String foodType = "Fast Food",
-    String category = "Food",
-    String description = "",
-  }) async {
-    final db = await instance.database;
-
-    return await db.insert("foods", {
-      "name": name,
-      "image": image,
-      "price": price,
-      "rate": rate,
-      "rating": rating,
-      "type": type,
-      "food_type": foodType,
-      "category": category,
-      "description": description,
-    });
-  }
-
   Future<List<Map<String, dynamic>>> getFoods() async {
     final db = await instance.database;
 
@@ -710,56 +587,16 @@ class DBHelper {
       "foods",
       where: "name LIKE ? OR type LIKE ? OR food_type LIKE ? OR category LIKE ?",
       whereArgs: [
-        "%$keyword%",
-        "%$keyword%",
-        "%$keyword%",
-        "%$keyword%",
+        "%\$keyword%",
+        "%\$keyword%",
+        "%\$keyword%",
+        "%\$keyword%",
       ],
       orderBy: "id DESC",
     );
   }
 
-  Future<int> updateFood({
-    required int id,
-    required String name,
-    required String image,
-    required double price,
-    String rate = "4.5",
-    String rating = "0",
-    String type = "Food",
-    String foodType = "Fast Food",
-    String category = "Food",
-    String description = "",
-  }) async {
-    final db = await instance.database;
 
-    return await db.update(
-      "foods",
-      {
-        "name": name,
-        "image": image,
-        "price": price,
-        "rate": rate,
-        "rating": rating,
-        "type": type,
-        "food_type": foodType,
-        "category": category,
-        "description": description,
-      },
-      where: "id = ?",
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> deleteFood(int id) async {
-    final db = await instance.database;
-
-    return await db.delete(
-      "foods",
-      where: "id = ?",
-      whereArgs: [id],
-    );
-  }
 
 
 
@@ -1046,11 +883,156 @@ class DBHelper {
     );
   }
 
+  // --- Admin User Management ---
+  Future<int> updateUser(int id, {required String name, required String phone, required String address, required String role}) async {
+    final db = await instance.database;
+    return await db.update(
+      "users",
+      {
+        "name": name,
+        "phone": phone,
+        "address": address,
+        "role": role,
+      },
+      where: "id = ?",
+      whereArgs: [id],
+    );
+  }
 
+  Future<int> deleteUser(int id) async {
+    final db = await instance.database;
+    return await db.delete("users", where: "id = ?", whereArgs: [id]);
+  }
+
+  // --- Admin Food Management ---
+  Future<int> insertFood(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.insert("foods", data);
+  }
+
+  Future<int> updateFood(int id, Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.update("foods", data, where: "id = ?", whereArgs: [id]);
+  }
+
+  Future<int> deleteFood(int id) async {
+    final db = await instance.database;
+    return await db.delete("foods", where: "id = ?", whereArgs: [id]);
+  }
+
+  // --- Admin Stats (Orders) ---
+  Future<List<Map<String, dynamic>>> getCompletedOrders() async {
+    final db = await instance.database;
+    return await db.query("orders", where: "status = ?", whereArgs: ["Thành công"]);
+  }
+  
+  Future<List<Map<String, dynamic>>> getAllOrders() async {
+    final db = await instance.database;
+    return await db.query("orders", orderBy: "id DESC");
+  }
+
+  // --- Reviews Management ---
+  Future<int> insertReview({required int orderId, required String userEmail, required int rating, required String comment}) async {
+    final db = await instance.database;
+    return await db.insert("reviews", {
+      "order_id": orderId,
+      "user_email": userEmail,
+      "rating": rating,
+      "comment": comment,
+      "is_hidden": 0,
+      "created_at": DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getAllReviews() async {
+    final db = await instance.database;
+    return await db.query("reviews", orderBy: "id DESC");
+  }
+
+  Future<int> updateReviewVisibility(int id, int isHidden) async {
+    final db = await instance.database;
+    return await db.update("reviews", {"is_hidden": isHidden}, where: "id = ?", whereArgs: [id]);
+  }
+
+  Future<int> deleteReview(int id) async {
+    final db = await instance.database;
+    return await db.delete("reviews", where: "id = ?", whereArgs: [id]);
+  }
+
+  Future<int> updateOrderReviewStatus(int orderId, int isReviewed) async {
+    final db = await instance.database;
+    return await db.update("orders", {"is_reviewed": isReviewed}, where: "id = ?", whereArgs: [orderId]);
+  }
+
+  // --- Category Management ---
+  Future<int> insertCategory(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    if (!data.containsKey('created_at')) {
+      data['created_at'] = DateTime.now().toIso8601String();
+    }
+    return await db.insert("categories", data);
+  }
+
+  Future<List<Map<String, dynamic>>> getCategories() async {
+    final db = await instance.database;
+    return await db.query("categories", orderBy: "id DESC");
+  }
+
+  Future<int> deleteCategory(int id) async {
+    final db = await instance.database;
+    return await db.delete("categories", where: "id = ?", whereArgs: [id]);
+  }
+
+  // --- Offer Management ---
+  Future<int> insertOffer(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    if (!data.containsKey('created_at')) {
+      data['created_at'] = DateTime.now().toIso8601String();
+    }
+    return await db.insert("offers", data);
+  }
+
+  Future<List<Map<String, dynamic>>> getOffers() async {
+    final db = await instance.database;
+    return await db.query("offers", orderBy: "id DESC");
+  }
+
+  Future<int> updateOffer(int id, Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.update("offers", data, where: "id = ?", whereArgs: [id]);
+  }
+
+  Future<int> deleteOffer(int id) async {
+    final db = await instance.database;
+    return await db.delete("offers", where: "id = ?", whereArgs: [id]);
+  }
+
+  Future<int> insertUsedOffer(int userId, int offerId) async {
+    final db = await instance.database;
+    return await db.insert(
+      "user_used_offers",
+      {
+        "user_id": userId,
+        "offer_id": offerId,
+        "created_at": DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
+  Future<bool> checkOfferUsed(int userId, int offerId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      "user_used_offers",
+      where: "user_id = ? AND offer_id = ?",
+      whereArgs: [userId, offerId],
+    );
+    return result.isNotEmpty;
+  }
 
   Future<void> close() async {
     final db = await instance.database;
     await db.close();
     _database = null;
   }
+
 }

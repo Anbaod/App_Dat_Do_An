@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/common_widget/round_button.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../common_widget/popular_resutaurant_row.dart';
-import '../more/my_order_view.dart';
 import '../../database/db_helper.dart';
-import '../menu/item_details_view.dart';
+import '../../common/globs.dart';
+import '../../common/service_call.dart';
+import '../more/my_order_view.dart';
 
 class OfferView extends StatefulWidget {
   const OfferView({super.key});
@@ -19,41 +20,34 @@ class _OfferViewState extends State<OfferView> {
 
   List<Map<String, dynamic>> offerArr = [];
   List<Map<String, dynamic>> filteredOffers = [];
-  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    loadOffers();
+    _loadOffers();
   }
 
-  Future<void> loadOffers() async {
-    try {
-      final dbOffers = await DBHelper.instance.getFoodsByCategory("Promotions");
-      final List<Map<String, dynamic>> loaded = dbOffers.map((item) {
-        final Map<String, dynamic> mutableItem = Map<String, dynamic>.from(item);
-        final String name = mutableItem["name"]?.toString() ?? "";
-        if (name.contains("Combo")) {
-          mutableItem["discount"] = "Giảm 20%";
-        } else if (name.contains("Café") || name.contains("Cafe") || name.contains("Coffee")) {
-          mutableItem["discount"] = "Giảm 10%";
-        } else if (name.contains("Isso")) {
-          mutableItem["discount"] = "Mua 1 tặng 1";
-        } else {
-          mutableItem["discount"] = "Freeship";
+  Future<void> _loadOffers() async {
+    final data = await DBHelper.instance.getOffers();
+    final prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt("current_user_id") ?? 0;
+    
+    List<Map<String, dynamic>> availableOffers = [];
+    if (userId > 0) {
+      for (var offer in data) {
+        bool isUsed = await DBHelper.instance.checkOfferUsed(userId, offer["id"] as int);
+        if (!isUsed) {
+          availableOffers.add(offer);
         }
-        return mutableItem;
-      }).toList();
+      }
+    } else {
+      availableOffers = data;
+    }
 
+    if (mounted) {
       setState(() {
-        offerArr = loaded;
-        filteredOffers = loaded;
-        isLoading = false;
-      });
-    } catch (e) {
-      debugPrint("Error loading offers: $e");
-      setState(() {
-        isLoading = false;
+        offerArr = availableOffers;
+        filteredOffers = availableOffers;
       });
     }
   }
@@ -150,16 +144,35 @@ class _OfferViewState extends State<OfferView> {
 
               RoundButton(
                 title: "Dùng ưu đãi",
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ItemDetailsView(mObj: item),
-                    ),
-                  ).then((_) {
-                    loadOffers();
-                  });
+                onPressed: () async {
+                  double originalPrice = double.tryParse(item["price"]?.toString() ?? "0") ?? 0.0;
+                  double finalPrice = originalPrice;
+                  
+                  if (discount.contains("10%")) {
+                    finalPrice = originalPrice * 0.9;
+                  } else if (discount.contains("20%")) {
+                    finalPrice = originalPrice * 0.8;
+                  } else if (discount.contains("30%")) {
+                    finalPrice = originalPrice * 0.7;
+                  } else if (discount.contains("50%")) {
+                    finalPrice = originalPrice * 0.5;
+                  }
+
+                  await DBHelper.instance.insertCart(
+                    name: "$name ($discount)",
+                    image: image,
+                    price: finalPrice,
+                    qty: 1,
+                  );
+
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Đã thêm $name vào giỏ hàng với giá ${finalPrice.toStringAsFixed(0)} VNĐ"),
+                      ),
+                    );
+                  }
                 },
               ),
             ],
@@ -292,9 +305,7 @@ class _OfferViewState extends State<OfferView> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        isLoading
-                            ? "Đang tải ưu đãi..."
-                            : "Hôm nay có ${offerArr.length} ưu đãi dành cho bạn",
+                        "Hôm nay có ${offerArr.length} ưu đãi dành cho bạn",
                         style: TextStyle(
                           color: TColor.primary,
                           fontSize: 14,
@@ -309,69 +320,64 @@ class _OfferViewState extends State<OfferView> {
 
             const SizedBox(height: 15),
 
-            isLoading
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                : filteredOffers.isEmpty
-                    ? Padding(
-                  padding: const EdgeInsets.all(30),
-                  child: Center(
-                    child: Text(
-                      "Không tìm thấy ưu đãi phù hợp",
-                      style: TextStyle(
-                        color: TColor.secondaryText,
-                        fontSize: 15,
-                      ),
-                    ),
+            filteredOffers.isEmpty
+                ? Padding(
+              padding: const EdgeInsets.all(30),
+              child: Center(
+                child: Text(
+                  "Không tìm thấy ưu đãi phù hợp",
+                  style: TextStyle(
+                    color: TColor.secondaryText,
+                    fontSize: 15,
                   ),
-                )
-                    : ListView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  padding: EdgeInsets.zero,
-                  itemCount: filteredOffers.length,
-                  itemBuilder: (context, index) {
-                    var pObj = filteredOffers[index];
-                    final String discount =
-                        pObj["discount"]?.toString() ?? "Ưu đãi";
+                ),
+              ),
+            )
+                : ListView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: filteredOffers.length,
+              itemBuilder: (context, index) {
+                var pObj = filteredOffers[index];
+                final String discount =
+                    pObj["discount"]?.toString() ?? "Ưu đãi";
 
-                    return Stack(
-                      children: [
-                        PopularRestaurantRow(
-                          pObj: pObj,
-                          onTap: () {
-                            showOfferDetail(pObj);
-                          },
+                return Stack(
+                  children: [
+                    PopularRestaurantRow(
+                      pObj: pObj,
+                      onTap: () {
+                        showOfferDetail(pObj);
+                      },
+                    ),
+
+                    Positioned(
+                      top: 15,
+                      right: 20,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
                         ),
-
-                        Positioned(
-                          top: 15,
-                          right: 20,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: TColor.primary,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              discount,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        decoration: BoxDecoration(
+                          color: TColor.primary,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          discount,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
-                    );
-                  },
-                ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),

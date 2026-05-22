@@ -3,8 +3,7 @@ import 'package:food_delivery/common_widget/round_button.dart';
 
 import '../../common/color_extension.dart';
 import '../main_tabview/main_tabview.dart';
-import 'order_history_view.dart';
-
+import 'my_pending_orders_view.dart';
 
 class CheckoutMessageView extends StatefulWidget {
   const CheckoutMessageView({super.key});
@@ -53,7 +52,7 @@ class _CheckoutMessageViewState extends State<CheckoutMessageView> {
               height: 25,
             ),
             Text(
-              "Thank You!",
+              "Cảm ơn bạn!",
               style: TextStyle(
                   color: TColor.primaryText,
                   fontSize: 26,
@@ -63,7 +62,7 @@ class _CheckoutMessageViewState extends State<CheckoutMessageView> {
               height: 8,
             ),
             Text(
-              "for your order",
+              "đã đặt hàng",
               style: TextStyle(
                   color: TColor.primaryText,
                   fontSize: 17,
@@ -73,7 +72,7 @@ class _CheckoutMessageViewState extends State<CheckoutMessageView> {
               height: 25,
             ),
             Text(
-              "Your Order is now being processed. We will let you know once the order is picked from the outlet. Check the status of your Order",
+              "Đơn hàng của bạn đang được xử lý. Chúng tôi sẽ thông báo cho bạn khi đơn hàng được giao đi. Bạn có thể kiểm tra trạng thái đơn hàng của mình",
               textAlign: TextAlign.center,
               style: TextStyle(color: TColor.primaryText, fontSize: 14),
             ),
@@ -81,9 +80,8 @@ class _CheckoutMessageViewState extends State<CheckoutMessageView> {
               height: 35,
             ),
             RoundButton(
-              title: "Track My Order",
+              title: "Theo dõi đơn hàng", 
               onPressed: () {
-                Navigator.pop(context);
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const MainTabView()),
@@ -91,13 +89,12 @@ class _CheckoutMessageViewState extends State<CheckoutMessageView> {
                 );
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const OrderHistoryView()),
+                  MaterialPageRoute(builder: (context) => const MyPendingOrdersView()),
                 );
-              },
+              }
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const MainTabView()),
@@ -105,7 +102,7 @@ class _CheckoutMessageViewState extends State<CheckoutMessageView> {
                 );
               },
               child: Text(
-                "Back To Home",
+                "Về trang chủ",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     color: TColor.primaryText,

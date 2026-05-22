@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/common/color_extension.dart';
 import 'package:food_delivery/view/login/login_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'admin_food_management_view.dart';
+import 'admin_stats_view.dart';
+import 'admin_review_management_view.dart';
+import 'admin_category_management_view.dart';
+import 'admin_user_management_view.dart';
+import 'admin_order_management_view.dart';
+import 'admin_offer_management_view.dart';
 
 class AdminDashboardView extends StatefulWidget {
   const AdminDashboardView({super.key});
@@ -9,7 +16,6 @@ class AdminDashboardView extends StatefulWidget {
   @override
   State<AdminDashboardView> createState() => _AdminDashboardViewState();
 }
-
 class _AdminDashboardViewState extends State<AdminDashboardView> {
   String adminName = "Admin";
 
@@ -60,7 +66,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Xin chào, \$adminName!",
+              "Xin chào, $adminName!",
               style: TextStyle(
                 color: TColor.primaryText,
                 fontSize: 24,
@@ -84,19 +90,35 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
               mainAxisSpacing: 15,
               children: [
                 _buildDashboardCard(
+                  icon: Icons.category,
+                  title: "Quản lý\nDanh mục",
+                  color: Colors.pink,
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminCategoryManagementView()));
+                  },
+                ),
+                _buildDashboardCard(
                   icon: Icons.fastfood,
                   title: "Quản lý\nMón ăn",
                   color: Colors.orange,
                   onTap: () {
-                    // TODO: Navigate to Food Management
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminFoodManagementView()));
                   },
                 ),
                 _buildDashboardCard(
-                  icon: Icons.list_alt,
-                  title: "Quản lý\nĐơn hàng",
+                  icon: Icons.rate_review,
+                  title: "Quản lý\nĐánh giá",
                   color: Colors.blue,
                   onTap: () {
-                    // TODO: Navigate to Order Management
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminReviewManagementView()));
+                  },
+                ),
+                _buildDashboardCard(
+                  icon: Icons.shopping_cart,
+                  title: "Quản lý\nĐơn hàng",
+                  color: Colors.teal,
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminOrderManagementView()));
                   },
                 ),
                 _buildDashboardCard(
@@ -104,7 +126,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
                   title: "Quản lý\nNgười dùng",
                   color: Colors.green,
                   onTap: () {
-                    // TODO: Navigate to User Management
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminUserManagementView()));
                   },
                 ),
                 _buildDashboardCard(
@@ -112,7 +134,15 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
                   title: "Thống kê\nDoanh thu",
                   color: Colors.purple,
                   onTap: () {
-                    // TODO: Navigate to Statistics
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminStatsView()));
+                  },
+                ),
+                _buildDashboardCard(
+                  icon: Icons.local_offer,
+                  title: "Quản lý\nƯu đãi",
+                  color: Colors.deepOrange,
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminOfferManagementView()));
                   },
                 ),
               ],

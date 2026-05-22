@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/view/more/about_us_view.dart';
 import 'package:food_delivery/view/more/inbox_view.dart';
 import 'package:food_delivery/view/more/payment_details_view.dart';
-import 'package:food_delivery/view/more/favorites_view.dart';
 
 import '../../common/color_extension.dart';
 import 'my_order_view.dart';
@@ -10,8 +9,7 @@ import 'notification_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../login/welcome_view.dart';
 import 'order_history_view.dart';
-import 'package:sqflite/sqflite.dart';
-import '../../database/db_helper.dart';
+import 'my_pending_orders_view.dart';
 
 class MoreView extends StatefulWidget {
   const MoreView({super.key});
@@ -21,80 +19,50 @@ class MoreView extends StatefulWidget {
 }
 
 class _MoreViewState extends State<MoreView> {
-  int unreadNotificationsCount = 0;
-
   List moreArr = [
     {
       "index": "1",
-      "name": "Payment Details",
+      "name": "Chi tiết thanh toán",
       "image": "assets/img/more_payment.png",
       "base": 0
     },
     {
       "index": "2",
-      "name": "My Orders",
+      "name": "Đơn hàng của tôi",
       "image": "assets/img/more_my_order.png",
       "base": 0
     },
     {
       "index": "3",
-      "name": "Notifications",
+      "name": "Thông báo",
       "image": "assets/img/more_notification.png",
-      "base": 0
+      "base": 5
     },
     {
       "index": "4",
-      "name": "Inbox",
+      "name": "Hộp thư",
       "image": "assets/img/more_inbox.png",
       "base": 0
     },
     {
-      "index": "8",
-      "name": "Favorites",
-      "image": "assets/img/fav_icon.png",
-      "base": 0
-    },
-    {
       "index": "5",
-      "name": "About Us",
+      "name": "Về chúng tôi",
       "image": "assets/img/more_info.png",
       "base": 0
     },
     {
       "index": "6",
-      "name": "Logout",
+      "name": "Đăng xuất",
       "image": "assets/img/more_info.png",
       "base": 0
     },
     {
       "index": "7",
-      "name": "Order History",
+      "name": "Lịch sử đơn hàng",
       "image": "assets/img/more_my_order.png",
       "base": 0
     },
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    loadUnreadNotificationsCount();
-  }
-
-  Future<void> loadUnreadNotificationsCount() async {
-    try {
-      final db = await DBHelper.instance.database;
-      final count = Sqflite.firstIntValue(
-        await db.rawQuery("SELECT COUNT(*) FROM notifications WHERE is_read = 0"),
-      ) ?? 0;
-      if (mounted) {
-        setState(() {
-          unreadNotificationsCount = count;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error loading unread notifications count: $e");
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +82,7 @@ class _MoreViewState extends State<MoreView> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "More",
+                      "Khác",
                       style: TextStyle(
                           color: TColor.primaryText,
                           fontSize: 20,
@@ -144,9 +112,6 @@ class _MoreViewState extends State<MoreView> {
                   itemBuilder: (context, index) {
                     var mObj = moreArr[index] as Map? ?? {};
                     var countBase = mObj["base"] as int? ?? 0;
-                    if (mObj["index"].toString() == "3") {
-                      countBase = unreadNotificationsCount;
-                    }
                     return InkWell(
                       onTap: () async {
                         switch (mObj["index"].toString()) {
@@ -163,15 +128,14 @@ class _MoreViewState extends State<MoreView> {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => const MyOrderView()));
+                                    builder: (context) => const MyPendingOrdersView()));
+                            break;
                           case "3":
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) =>
-                                        const NotificationsView())).then((_) {
-                              loadUnreadNotificationsCount();
-                            });
+                                        const NotificationsView()));
                           case "4":
                             Navigator.push(
                                 context,
@@ -199,15 +163,6 @@ class _MoreViewState extends State<MoreView> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const OrderHistoryView(),
-                              ),
-                            );
-                            break;
-
-                          case "8":
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const FavoritesView(),
                               ),
                             );
                             break;

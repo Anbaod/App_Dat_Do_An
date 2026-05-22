@@ -97,6 +97,10 @@ class _NewPasswordViewState extends State<NewPasswordView> {
     if (email.isNotEmpty) {
       Globs.showHUD();
       await DBHelper.instance.updateUserPassword(email, txtPassword.text);
+      await DBHelper.instance.insertNotification(
+        title: "Đổi mật khẩu thành công", 
+        message: "Mật khẩu của tài khoản $email đã được thay đổi thành công."
+      );
       Globs.hideHUD();
 
       if (mounted) {
