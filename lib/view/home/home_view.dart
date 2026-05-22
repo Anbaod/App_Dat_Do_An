@@ -40,16 +40,13 @@ class _HomeViewState extends State<HomeView> {
     final db = await DBHelper.instance.database;
     final allFoods = await db.query("foods");
 
-    // Lấy 3 danh mục đầu
     List<Map<String, dynamic>> topCats = [];
     for (int i = 0; i < categories.length && i < 4; i++) {
       topCats.add(categories[i]);
     }
 
-    // Phân loại món ăn
     List<Map<String, dynamic>> foods = List<Map<String, dynamic>>.from(allFoods);
     
-    // Giả sử có dữ liệu
     setState(() {
       catArr = topCats;
       popArr = foods.take(3).toList(); // Lấy 3 món

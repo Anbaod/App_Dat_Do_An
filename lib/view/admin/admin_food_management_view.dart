@@ -39,11 +39,9 @@ class _AdminFoodManagementViewState extends State<AdminFoodManagementView> {
     final descCtrl = TextEditingController(text: food?['description']);
     String? selectedCategory = food?['category'];
     
-    // Đảm bảo selectedCategory nằm trong danh sách categories
     if (selectedCategory != null && !categories.any((c) => c['name'] == selectedCategory)) {
       selectedCategory = null;
     }
-    // Gán mặc định nếu rỗng
     if (selectedCategory == null && categories.isNotEmpty) {
       selectedCategory = categories.first['name'];
     }

@@ -349,6 +349,7 @@ class DBHelper {
       {"name": "Bánh Mì", "image": "assets/img/banh_mi.png"},
       {"name": "Cơm", "image": "assets/img/com_tam.png"},
       {"name": "Bún", "image": "assets/img/bun_cha.png"},
+
     ];
     for (var cat in categories) {
       await db.insert("categories", {
@@ -373,7 +374,7 @@ class DBHelper {
       },
       {
         "name": "Phở Gà Ta",
-        "image": "assets/img/pho_bo.png",
+        "image": "assets/img/pho_ga.png",
         "price": 45000.0,
         "rate": "4.7",
         "category": "Phở",
@@ -383,7 +384,7 @@ class DBHelper {
       },
       {
         "name": "Phở Trộn Cuốn",
-        "image": "assets/img/pho_bo.png",
+        "image": "assets/img/pho_cuon.png",
         "price": 50000.0,
         "rate": "4.8",
         "category": "Phở",
@@ -403,7 +404,7 @@ class DBHelper {
       },
       {
         "name": "Bánh Mì Chả Lụa",
-        "image": "assets/img/banh_mi.png",
+        "image": "assets/img/banh_mi_cha.png",
         "price": 20000.0,
         "rate": "4.6",
         "category": "Bánh Mì",
@@ -413,7 +414,7 @@ class DBHelper {
       },
       {
         "name": "Bánh Mì Heo Quay",
-        "image": "assets/img/banh_mi.png",
+        "image": "assets/img/banh_mi_heo_quay.png",
         "price": 30000.0,
         "rate": "4.9",
         "category": "Bánh Mì",
@@ -423,7 +424,7 @@ class DBHelper {
       },
       {
         "name": "Cơm Tấm Sườn Bì",
-        "image": "assets/img/com_tam.png",
+        "image": "assets/img/com_tam_suon_bi.png",
         "price": 45000.0,
         "rate": "4.7",
         "category": "Cơm",
@@ -443,7 +444,7 @@ class DBHelper {
       },
       {
         "name": "Cơm Gà Xối Mỡ",
-        "image": "assets/img/com_tam.png",
+        "image": "assets/img/com_ga.png",
         "price": 40000.0,
         "rate": "4.8",
         "category": "Cơm",
@@ -463,7 +464,7 @@ class DBHelper {
       },
       {
         "name": "Bún Bò Huế",
-        "image": "assets/img/bun_cha.png",
+        "image": "assets/img/bun_bo_hue.png",
         "price": 55000.0,
         "rate": "4.8",
         "category": "Bún",
@@ -473,7 +474,7 @@ class DBHelper {
       },
       {
         "name": "Bún Thịt Nướng",
-        "image": "assets/img/bun_cha.png",
+        "image": "assets/img/bun_thit_nuong.png",
         "price": 40000.0,
         "rate": "4.7",
         "category": "Bún",
