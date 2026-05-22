@@ -21,7 +21,7 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -36,6 +36,7 @@ class DBHelper {
         phone TEXT,
         address TEXT,
         password TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
         created_at TEXT NOT NULL
       )
     ''');
@@ -105,6 +106,21 @@ class DBHelper {
         created_at TEXT NOT NULL
       )
     ''');
+
+    // Tạo tài khoản admin mặc định
+    await db.insert(
+      "users",
+      {
+        "name": "Admin",
+        "email": "admin@gmail.com",
+        "password": "123",
+        "phone": "",
+        "address": "",
+        "role": "admin",
+        "created_at": DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -201,6 +217,29 @@ class DBHelper {
         );
       } catch (_) {}
       
+      // Tạo tài khoản admin mặc định
+      await db.insert(
+        "users",
+        {
+          "name": "Admin",
+          "email": "admin@gmail.com",
+          "password": "123",
+          "phone": "",
+          "address": "",
+          "role": "admin",
+          "created_at": DateTime.now().toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+
+    if (oldVersion < 6) {
+      try {
+        await db.execute(
+          "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'",
+        );
+      } catch (_) {}
+
       // Tạo tài khoản admin mặc định
       await db.insert(
         "users",

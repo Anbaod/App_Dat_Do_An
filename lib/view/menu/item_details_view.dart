@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:food_delivery/common_widget/round_icon_button.dart';
+import 'package:food_delivery/database/db_helper.dart';
 
 import '../../common/color_extension.dart';
 import '../more/my_order_view.dart';
@@ -47,12 +48,30 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
     price = double.tryParse(widget.mObj["price"]?.toString() ?? "15") ?? 15;
   }
 
-  void addToCart() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Đã thêm $qty x $name vào giỏ hàng"),
-      ),
-    );
+  void addToCart() async {
+    try {
+      await DBHelper.instance.insertCart(
+        name: name,
+        image: image,
+        price: price,
+        qty: qty,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Đã thêm $qty x $name vào giỏ hàng"),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Có lỗi xảy ra: $e"),
+          ),
+        );
+      }
+    }
   }
 
   @override
