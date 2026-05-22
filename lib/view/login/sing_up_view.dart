@@ -71,9 +71,10 @@ class _SignUpViewState extends State<SignUpView> {
         );
       }
     } catch (e) {
+      print("Lỗi đăng ký: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Lỗi đăng ký: Email có thể đã tồn tại")),
+          SnackBar(content: Text("Lỗi đăng ký: $e")),
         );
       }
     }

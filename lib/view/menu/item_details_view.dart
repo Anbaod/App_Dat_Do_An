@@ -46,6 +46,16 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
         "Món ăn thơm ngon, được chuẩn bị từ nguyên liệu tươi và phù hợp cho mọi bữa ăn.";
 
     price = double.tryParse(widget.mObj["price"]?.toString() ?? "15") ?? 15;
+    checkIfFavorite();
+  }
+
+  Future<void> checkIfFavorite() async {
+    final status = await DBHelper.instance.isFavorite(name);
+    if (mounted) {
+      setState(() {
+        isFav = status;
+      });
+    }
   }
 
   void addToCart() async {
@@ -633,10 +643,37 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
                     alignment: Alignment.bottomRight,
                     margin: const EdgeInsets.only(right: 4),
                     child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          isFav = !isFav;
-                        });
+                      onTap: () async {
+                        try {
+                          if (isFav) {
+                            await DBHelper.instance.deleteFavoriteByName(name);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Đã xóa khỏi danh sách yêu thích")),
+                              );
+                            }
+                          } else {
+                            await DBHelper.instance.insertFavorite(
+                              name: name,
+                              image: image,
+                              price: price,
+                            );
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Đã thêm vào danh sách yêu thích")),
+                              );
+                            }
+                          }
+                          setState(() {
+                            isFav = !isFav;
+                          });
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Lỗi yêu thích: $e")),
+                            );
+                          }
+                        }
                       },
                       child: Image.asset(
                         isFav

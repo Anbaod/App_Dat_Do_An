@@ -33,6 +33,9 @@ class EmailHelper {
         print('Problem: ${p.code}: ${p.msg}');
       }
       return false;
+    } catch (e) {
+      print('Message not sent (General Error): $e');
+      return false;
     }
   }
 
@@ -86,6 +89,9 @@ class EmailHelper {
       for (var p in e.problems) {
         print('Problem: ${p.code}: ${p.msg}');
       }
+      return false;
+    } catch (e) {
+      print('Welcome Message not sent (General Error): $e');
       return false;
     }
   }

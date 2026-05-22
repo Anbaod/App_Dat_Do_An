@@ -10,6 +10,9 @@ import '../../common_widget/popular_resutaurant_row.dart';
 import '../../common_widget/recent_item_row.dart';
 import '../../common_widget/view_all_title_row.dart';
 import '../more/my_order_view.dart';
+import '../menu/menu_items_view.dart';
+import '../menu/item_details_view.dart';
+import '../../database/db_helper.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -22,84 +25,78 @@ class _HomeViewState extends State<HomeView> {
   TextEditingController txtSearch = TextEditingController();
 
   List catArr = [
-    {"image": "assets/img/cat_offer.png", "name": "Offers"},
-    {"image": "assets/img/cat_sri.png", "name": "Sri Lankan"},
-    {"image": "assets/img/cat_3.png", "name": "Italian"},
-    {"image": "assets/img/cat_4.png", "name": "Indian"},
+    {"name": "Food", "image": "assets/img/menu_1.png"},
+    {"name": "Beverages", "image": "assets/img/menu_2.png"},
+    {"name": "Desserts", "image": "assets/img/menu_3.png"},
+    {"name": "Promotions", "image": "assets/img/menu_4.png"},
   ];
 
-  List popArr = [
-    {
-      "image": "assets/img/res_1.png",
-      "name": "Minute by tuk tuk",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/res_2.png",
-      "name": "Café de Noir",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/res_3.png",
-      "name": "Bakes by Tella",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-  ];
+  List popArr = [];
+  List mostPopArr = [];
+  List recentArr = [];
+  List searchResultArr = [];
 
-  List mostPopArr = [
-    {
-      "image": "assets/img/m_res_1.png",
-      "name": "Minute by tuk tuk",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/m_res_2.png",
-      "name": "Café de Noir",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-  ];
+  bool isLoading = true;
+  bool isSearching = false;
 
-  List recentArr = [
-    {
-      "image": "assets/img/item_1.png",
-      "name": "Mulberry Pizza by Josh",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/item_2.png",
-      "name": "Barita",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-    {
-      "image": "assets/img/item_3.png",
-      "name": "Pizza Rush Hour",
-      "rate": "4.9",
-      "rating": "124",
-      "type": "Cafa",
-      "food_type": "Western Food"
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    loadHomeData();
+  }
+
+  Future<void> loadHomeData() async {
+    try {
+      final allFoods = await DBHelper.instance.getFoods();
+      setState(() {
+        // Popular: items with rating >= 4.8, limit 3
+        popArr = allFoods
+            .where((f) => double.tryParse(f["rate"]?.toString() ?? "0.0")! >= 4.8)
+            .take(3)
+            .toList();
+
+        // Most Popular: rate >= 4.7, skip 3, limit 4
+        mostPopArr = allFoods
+            .where((f) => double.tryParse(f["rate"]?.toString() ?? "0.0")! >= 4.7)
+            .skip(3)
+            .take(4)
+            .toList();
+        if (mostPopArr.isEmpty) {
+          mostPopArr = allFoods.take(2).toList();
+        }
+
+        // Recent: take 4
+        recentArr = allFoods.take(4).toList();
+        
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      debugPrint("Error loading home data: $e");
+    }
+  }
+
+  void searchFoods(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        isSearching = false;
+        searchResultArr = [];
+      });
+      return;
+    }
+
+    try {
+      final results = await DBHelper.instance.searchFoods(query);
+      setState(() {
+        isSearching = true;
+        searchResultArr = results;
+      });
+    } catch (e) {
+      debugPrint("Error searching foods: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,6 +184,7 @@ class _HomeViewState extends State<HomeView> {
                 child: RoundTextfield(
                   hintText: "Search Food",
                   controller: txtSearch,
+                  onChanged: searchFoods,
                   left: Container(
                     alignment: Alignment.center,
                     width: 30,
@@ -201,83 +199,189 @@ class _HomeViewState extends State<HomeView> {
               const SizedBox(
                 height: 30,
               ),
-              SizedBox(
-                height: 120,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  itemCount: catArr.length,
+              if (isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (isSearching) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Search Results (${searchResultArr.length})",
+                        style: TextStyle(
+                            color: TColor.primaryText,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          txtSearch.clear();
+                          setState(() {
+                            isSearching = false;
+                            searchResultArr = [];
+                          });
+                        },
+                        child: Text(
+                          "Clear",
+                          style: TextStyle(
+                              color: TColor.primary,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                searchResultArr.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
+                          child: Text(
+                            "No foods found matching your query",
+                            style: TextStyle(
+                                color: TColor.secondaryText,
+                                fontSize: 16),
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        itemCount: searchResultArr.length,
+                        itemBuilder: ((context, index) {
+                          var rObj = searchResultArr[index] as Map? ?? {};
+                          return RecentItemRow(
+                            rObj: rObj,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ItemDetailsView(mObj: rObj),
+                                ),
+                              );
+                            },
+                          );
+                        }),
+                      )
+              ] else ...[
+                SizedBox(
+                  height: 120,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    itemCount: catArr.length,
+                    itemBuilder: ((context, index) {
+                      var cObj = catArr[index] as Map? ?? {};
+                      return CategoryCell(
+                        cObj: cObj,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MenuItemsView(mObj: cObj),
+                            ),
+                          ).then((_) {
+                            loadHomeData();
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: ViewAllTitleRow(
+                    title: "Popular Restaurants",
+                    onView: () {},
+                  ),
+                ),
+                ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: popArr.length,
                   itemBuilder: ((context, index) {
-                    var cObj = catArr[index] as Map? ?? {};
-                    return CategoryCell(
-                      cObj: cObj,
-                      onTap: () {},
+                    var pObj = popArr[index] as Map? ?? {};
+                    return PopularRestaurantRow(
+                      pObj: pObj,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ItemDetailsView(mObj: pObj),
+                          ),
+                        ).then((_) {
+                          loadHomeData();
+                        });
+                      },
                     );
                   }),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: ViewAllTitleRow(
-                  title: "Popular Restaurants",
-                  onView: () {},
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: ViewAllTitleRow(
+                    title: "Most Popular",
+                    onView: () {},
+                  ),
                 ),
-              ),
-              ListView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: popArr.length,
-                itemBuilder: ((context, index) {
-                  var pObj = popArr[index] as Map? ?? {};
-                  return PopularRestaurantRow(
-                    pObj: pObj,
-                    onTap: () {},
-                  );
-                }),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: ViewAllTitleRow(
-                  title: "Most Popular",
-                  onView: () {},
+                SizedBox(
+                  height: 200,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    itemCount: mostPopArr.length,
+                    itemBuilder: ((context, index) {
+                      var mObj = mostPopArr[index] as Map? ?? {};
+                      return MostPopularCell(
+                        mObj: mObj,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ItemDetailsView(mObj: mObj),
+                            ),
+                          ).then((_) {
+                            loadHomeData();
+                          });
+                        },
+                      );
+                    }),
+                  ),
                 ),
-              ),
-              SizedBox(
-                height: 200,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: ViewAllTitleRow(
+                    title: "Recent Items",
+                    onView: () {},
+                  ),
+                ),
+                ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
                   padding: const EdgeInsets.symmetric(horizontal: 15),
-                  itemCount: mostPopArr.length,
+                  itemCount: recentArr.length,
                   itemBuilder: ((context, index) {
-                    var mObj = mostPopArr[index] as Map? ?? {};
-                    return MostPopularCell(
-                      mObj: mObj,
-                      onTap: () {},
+                    var rObj = recentArr[index] as Map? ?? {};
+                    return RecentItemRow(
+                      rObj: rObj,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ItemDetailsView(mObj: rObj),
+                          ),
+                        ).then((_) {
+                          loadHomeData();
+                        });
+                      },
                     );
                   }),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: ViewAllTitleRow(
-                  title: "Recent Items",
-                  onView: () {},
-                ),
-              ),
-              ListView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                itemCount: recentArr.length,
-                itemBuilder: ((context, index) {
-                  var rObj = recentArr[index] as Map? ?? {};
-                  return RecentItemRow(
-                    rObj: rObj,
-                    onTap: () {},
-                  );
-                }),
-              )
+                )
+              ]
             ],
           ),
         ),

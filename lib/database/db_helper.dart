@@ -12,6 +12,7 @@ class DBHelper {
     if (_database != null) return _database!;
 
     _database = await _initDB("food_delivery.db");
+    await _seedFoodsIfEmpty(_database!);
     return _database!;
   }
 
@@ -21,10 +22,273 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 8,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
+  }
+
+  Future<void> _seedFoodsIfEmpty(Database db) async {
+    final countResult = Sqflite.firstIntValue(
+      await db.rawQuery("SELECT COUNT(*) FROM foods"),
+    );
+    if (countResult == 0) {
+      final List<Map<String, dynamic>> defaultFoods = [
+        // --- FOOD ---
+        {
+          "category": "Food",
+          "image": "assets/img/menu_1.png",
+          "name": "Beef Burger",
+          "rate": "4.9",
+          "rating": "124",
+          "type": "King Burgers",
+          "food_type": "Fast Food",
+          "price": 16.0,
+          "description": "Burger bò thơm ngon với phô mai, rau tươi và sốt đặc biệt.",
+        },
+        {
+          "category": "Food",
+          "image": "assets/img/menu_2.png",
+          "name": "Classic Burger",
+          "rate": "4.8",
+          "rating": "98",
+          "type": "King Burgers",
+          "food_type": "Fast Food",
+          "price": 14.0,
+          "description": "Burger truyền thống dễ ăn, phù hợp cho mọi bữa ăn.",
+        },
+        {
+          "category": "Food",
+          "image": "assets/img/menu_3.png",
+          "name": "Pizza Hải Sản",
+          "rate": "4.7",
+          "rating": "102",
+          "type": "Pizza House",
+          "food_type": "Pizza",
+          "price": 22.0,
+          "description": "Pizza hải sản với tôm, mực, phô mai và sốt cà chua.",
+        },
+        {
+          "category": "Food",
+          "image": "assets/img/menu_1.png",
+          "name": "Mì Ý Bò Bằm",
+          "rate": "4.7",
+          "rating": "102",
+          "type": "Pasta Italian",
+          "food_type": "Western Food",
+          "price": 18.0,
+          "description": "Mì Ý xốt bò bằm đậm đà chuẩn vị Ý.",
+        },
+        {
+          "category": "Food",
+          "image": "assets/img/menu_2.png",
+          "name": "Gà Rán Giòn Cay",
+          "rate": "4.6",
+          "rating": "89",
+          "type": "Crispy Chicken",
+          "food_type": "Fast Food",
+          "price": 13.0,
+          "description": "Gà rán giòn rụm, vị cay nồng đậm đà hấp dẫn.",
+        },
+        {
+          "category": "Food",
+          "image": "assets/img/menu_3.png",
+          "name": "Cơm Gà Xối Mỡ",
+          "rate": "4.6",
+          "rating": "118",
+          "type": "Rice House",
+          "food_type": "Vietnamese Food",
+          "price": 12.0,
+          "description": "Cơm chiên tơi xốp kèm đùi gà chiên da giòn rụm béo ngậy.",
+        },
+        {
+          "category": "Food",
+          "image": "assets/img/menu_2.png",
+          "name": "Bánh Mì Thịt Nướng",
+          "rate": "4.7",
+          "rating": "130",
+          "type": "Banh Mi VN",
+          "food_type": "Street Food",
+          "price": 7.0,
+          "description": "Bánh mì Việt Nam giòn tan nhân thịt nướng thơm lừng kèm rau chua.",
+        },
+
+        // --- BEVERAGES ---
+        {
+          "category": "Beverages",
+          "image": "assets/img/offer_1.png",
+          "name": "Cà Phê Sữa Đá",
+          "rate": "4.9",
+          "rating": "200",
+          "type": "Cafe Việt",
+          "food_type": "Beverages",
+          "price": 5.0,
+          "description": "Cà phê sữa đá đậm vị Việt Nam, thơm béo và tỉnh táo.",
+        },
+        {
+          "category": "Beverages",
+          "image": "assets/img/dess_3.png",
+          "name": "Street Shake",
+          "rate": "4.7",
+          "rating": "86",
+          "type": "Café Racer",
+          "food_type": "Beverages",
+          "price": 10.0,
+          "description": "Đồ uống mát lạnh, béo nhẹ, thích hợp dùng kèm đồ ăn nhanh.",
+        },
+        {
+          "category": "Beverages",
+          "image": "assets/img/menu_3.png",
+          "name": "Trà Sữa Trân Châu",
+          "rate": "4.9",
+          "rating": "210",
+          "type": "Milk Tea",
+          "food_type": "Drink",
+          "price": 5.0,
+          "description": "Trà sữa trân châu ngọt dịu, thơm béo và dễ uống.",
+        },
+        {
+          "category": "Beverages",
+          "image": "assets/img/offer_2.png",
+          "name": "Nước Ép Cam Tươi",
+          "rate": "4.8",
+          "rating": "95",
+          "type": "Fresh Juice",
+          "food_type": "Drink",
+          "price": 6.0,
+          "description": "Nước ép cam nguyên chất 100%, giàu Vitamin C tự nhiên.",
+        },
+        {
+          "category": "Beverages",
+          "image": "assets/img/offer_3.png",
+          "name": "Trà Đào Sả Đá",
+          "rate": "4.7",
+          "rating": "112",
+          "type": "Tea House",
+          "food_type": "Drink",
+          "price": 5.5,
+          "description": "Trà đào thơm ngát kết hợp sả tươi và miếng đào giòn ngọt.",
+        },
+
+        // --- DESSERTS ---
+        {
+          "category": "Desserts",
+          "image": "assets/img/dess_1.png",
+          "name": "French Apple Pie",
+          "rate": "4.9",
+          "rating": "124",
+          "type": "Minute by tuk tuk",
+          "food_type": "Desserts",
+          "price": 15.0,
+          "description": "Bánh táo thơm ngon, lớp vỏ giòn nhẹ và nhân táo ngọt dịu.",
+        },
+        {
+          "category": "Desserts",
+          "image": "assets/img/dess_2.png",
+          "name": "Dark Chocolate Cake",
+          "rate": "4.8",
+          "rating": "98",
+          "type": "Cakes by Tella",
+          "food_type": "Desserts",
+          "price": 18.0,
+          "description": "Bánh socola đậm vị, mềm mịn và hấp dẫn.",
+        },
+        {
+          "category": "Desserts",
+          "image": "assets/img/dess_4.png",
+          "name": "Fudgy Chewy Brownies",
+          "rate": "4.9",
+          "rating": "124",
+          "type": "Minute by tuk tuk",
+          "food_type": "Desserts",
+          "price": 16.0,
+          "description": "Brownies mềm dẻo, thơm mùi socola và ngọt hài hòa.",
+        },
+        {
+          "category": "Desserts",
+          "image": "assets/img/dess_1.png",
+          "name": "Strawberry Mousse",
+          "rate": "4.8",
+          "rating": "75",
+          "type": "Sweet Bakery",
+          "food_type": "Desserts",
+          "price": 12.0,
+          "description": "Bánh mousse dâu tây ngọt mát, mềm mịn tan trong miệng.",
+        },
+        {
+          "category": "Desserts",
+          "image": "assets/img/dess_2.png",
+          "name": "Tiramisu Cake",
+          "rate": "4.9",
+          "rating": "92",
+          "type": "Italian Bakery",
+          "food_type": "Desserts",
+          "price": 14.5,
+          "description": "Bánh tiramisu béo ngậy, đượm hương cà phê và rượu nhẹ nồng nàn.",
+        },
+
+        // --- PROMOTIONS ---
+        {
+          "category": "Promotions",
+          "image": "assets/img/offer_1.png",
+          "name": "Café de Noires",
+          "rate": "4.9",
+          "rating": "124",
+          "type": "Cafe",
+          "food_type": "Western Food",
+          "price": 12.0,
+          "description": "Ưu đãi đặc biệt cho đồ uống và món ăn nhẹ.",
+        },
+        {
+          "category": "Promotions",
+          "image": "assets/img/offer_2.png",
+          "name": "Isso",
+          "rate": "4.8",
+          "rating": "98",
+          "type": "Cafe",
+          "food_type": "Fast Food",
+          "price": 10.0,
+          "description": "Khuyến mãi mua 1 tặng 1 trong hôm nay.",
+        },
+        {
+          "category": "Promotions",
+          "image": "assets/img/offer_3.png",
+          "name": "Cafe Beans",
+          "rate": "4.7",
+          "rating": "86",
+          "type": "Cafe",
+          "food_type": "Coffee",
+          "price": 8.0,
+          "description": "Miễn phí giao hàng cho đơn từ 50.000đ.",
+        },
+        {
+          "category": "Promotions",
+          "image": "assets/img/menu_1.png",
+          "name": "Combo Burger & Pepsi",
+          "rate": "4.9",
+          "rating": "115",
+          "type": "King Combo",
+          "food_type": "Fast Food",
+          "price": 18.5,
+          "description": "Combo Beef Burger và nước ngọt Pepsi mát lạnh.",
+        },
+        {
+          "category": "Promotions",
+          "image": "assets/img/menu_2.png",
+          "name": "Combo Gà Rán Gia Đình",
+          "rate": "4.8",
+          "rating": "142",
+          "type": "Family Combo",
+          "food_type": "Fried Food",
+          "price": 29.0,
+          "description": "Combo 4 miếng gà rán giòn cay, khoai tây chiên cỡ lớn.",
+        }
+      ];
+
+      for (var food in defaultFoods) {
+        await db.insert("foods", food);
+      }
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -254,6 +518,36 @@ class DBHelper {
         },
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
+    }
+
+    if (oldVersion < 7) {
+      try {
+        await db.execute(
+          "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'",
+        );
+      } catch (_) {}
+
+      // Tạo tài khoản admin mặc định
+      await db.insert(
+        "users",
+        {
+          "name": "Admin",
+          "email": "admin@gmail.com",
+          "password": "123",
+          "phone": "",
+          "address": "",
+          "role": "admin",
+          "created_at": DateTime.now().toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+
+    if (oldVersion < 8) {
+      try {
+        await db.execute("DELETE FROM foods");
+      } catch (_) {}
+      await _seedFoodsIfEmpty(db);
     }
   }
 

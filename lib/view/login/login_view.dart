@@ -6,7 +6,6 @@ import 'package:food_delivery/view/login/sing_up_view.dart';
 import 'package:food_delivery/database/db_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../common_widget/round_icon_button.dart';
 import '../../common_widget/round_textfield.dart';
 import '../main_tabview/main_tabview.dart';
 import 'package:food_delivery/view/admin/admin_dashboard_view.dart';
@@ -33,44 +32,54 @@ class _LoginViewState extends State<LoginView> {
       return;
     }
 
-    final user = await DBHelper.instance.getUserByEmailAndPassword(email, password);
+    try {
+      final user = await DBHelper.instance.getUserByEmailAndPassword(email, password);
 
-    if (user != null) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool("is_login", true);
-      await prefs.setString("current_user_name", user['name'] ?? "");
-      await prefs.setString("current_user_email", user['email'] ?? "");
-      
-      String role = user['role'] ?? "user";
-      await prefs.setString("current_user_role", role);
+      if (user != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool("is_login", true);
+        await prefs.setInt("current_user_id", user['id'] as int);
+        await prefs.setString("current_user_name", user['name'] ?? "");
+        await prefs.setString("current_user_email", user['email'] ?? "");
+        
+        String role = user['role'] ?? "user";
+        await prefs.setString("current_user_role", role);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Đăng nhập thành công")),
-        );
-
-        if (role == "admin") {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AdminDashboardView(),
-            ),
-            (route) => false,
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Đăng nhập thành công")),
           );
-        } else {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const MainTabView(),
-            ),
-            (route) => false,
+
+          if (role == "admin") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminDashboardView(),
+              ),
+              (route) => false,
+            );
+          } else {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MainTabView(),
+              ),
+              (route) => false,
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Sai email hoặc mật khẩu hoặc tài khoản chưa tồn tại")),
           );
         }
       }
-    } else {
+    } catch (e) {
+      print("Lỗi đăng nhập: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Sai email hoặc mật khẩu hoặc tài khoản chưa tồn tại")),
+          SnackBar(content: Text("Lỗi hệ thống đăng nhập: $e")),
         );
       }
     }
